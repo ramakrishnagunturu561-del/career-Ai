@@ -1,0 +1,37 @@
+# Python
+venv/
+.env
+__pycache__/
+*.py[cod]
+*$py.class
+.ipynb_checkpoints
+.pytest_cache/
+
+# VS Code
+.vscode/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Byte-compiled / optimized / DLL files
+*.so
+*.dylib
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Test artifacts
+.coverage
+htmlcov/
+
+# Misc
+.DS_Store
+*.sqlite3
+
+# Model checkpoints
+*.ckpt
+*.h5
+*.pt
