@@ -1,0 +1,111 @@
+from pathlib import Path
+import joblib
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+MODEL_DIR = BASE_DIR / "model"
+
+print("Loading CareerLens AI data...")
+
+career_skill_map = joblib.load(
+    MODEL_DIR / "career_skill_map.pkl"
+)
+
+print("CareerLens AI ready!")
+
+
+def normalize_skill(skill):
+    return str(skill).strip().lower()
+
+
+def predict_career(skills, top_n=3):
+
+    candidate_skills = {
+        normalize_skill(skill)
+        for skill in skills
+    }
+
+    results = []
+
+    for role, required_skills in career_skill_map.items():
+
+        required = {
+            normalize_skill(skill)
+            for skill in required_skills
+        }
+
+        if not required:
+            continue
+
+        matched = candidate_skills.intersection(required)
+
+        score = (
+            len(matched) /
+            len(required)
+        ) * 100
+
+        results.append({
+            "career": role,
+            "confidence": round(score, 2)
+        })
+
+    results = sorted(
+        results,
+        key=lambda x: x["confidence"],
+        reverse=True
+    )[:top_n]
+
+    if not results:
+        return {
+            "best_career": "No Match",
+            "confidence": 0,
+            "top_careers": []
+        }
+
+    return {
+        "best_career":
+            results[0]["career"],
+
+        "confidence":
+            results[0]["confidence"],
+
+        "top_careers":
+            results
+    }
+
+
+def analyze_skill_gap(skills, role):
+
+    required_skills = career_skill_map.get(
+        role,
+        []
+    )
+
+    candidate = {
+        normalize_skill(skill)
+        for skill in skills
+    }
+
+    matched = []
+
+    missing = []
+
+    for skill in required_skills:
+
+        if normalize_skill(skill) in candidate:
+            matched.append(skill)
+
+        else:
+            missing.append(skill)
+
+    coverage = (
+        len(matched) /
+        len(required_skills) * 100
+        if required_skills
+        else 0
+    )
+
+    return {
+        "matched": matched,
+        "missing": missing,
+        "coverage": round(coverage, 2)
+    }
