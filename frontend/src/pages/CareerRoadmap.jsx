@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "../config";
 import { Map, Sparkles, CheckCircle2, ArrowRight, Video, Briefcase, RefreshCw, AlertCircle } from "lucide-react";
 
 function CareerRoadmap() {
@@ -37,7 +38,7 @@ function CareerRoadmap() {
     const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout to prevent infinite loading
 
     try {
-      const res = await fetch("http://localhost:8000/generate-roadmap", {
+      const res = await fetch(`${API_BASE_URL}/generate-roadmap`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         signal: controller.signal,

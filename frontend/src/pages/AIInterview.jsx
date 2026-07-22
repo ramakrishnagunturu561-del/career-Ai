@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "../config";
 import {
   Sparkles, ChevronRight, RotateCcw, LayoutDashboard,
   CheckCircle, AlertCircle, Brain, Camera, CameraOff,
@@ -63,7 +64,7 @@ function AIInterview() {
   /* Check Ollama Health via FastAPI */
   const checkHealth = async () => {
     try {
-      const res = await fetch("http://localhost:8000/ai-interview/health");
+      const res = await fetch(`${API_BASE_URL}/ai-interview/health`);
       if (res.ok) {
         const data = await res.json();
         setOllamaStatus({
@@ -220,7 +221,7 @@ function AIInterview() {
     await startWebcam();
 
     try {
-      const res = await fetch("http://localhost:8000/ai-interview/start", {
+      const res = await fetch(`${API_BASE_URL}/ai-interview/start`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -267,7 +268,7 @@ function AIInterview() {
     setEvaluating(true);
 
     try {
-      const res = await fetch("http://localhost:8000/ai-interview/evaluate", {
+      const res = await fetch(`${API_BASE_URL}/ai-interview/evaluate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

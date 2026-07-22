@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "../config";
 import {
   UploadCloud,
   Sparkles,
@@ -38,7 +39,7 @@ function ResumeAnalyzer() {
     formData.append("file", file);
 
     try {
-      const response = await fetch("http://localhost:8000/analyze-resume", {
+      const response = await fetch(`${API_BASE_URL}/analyze-resume`, {
         method: "POST",
         body: formData,
       });

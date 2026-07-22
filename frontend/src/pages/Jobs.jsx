@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { API_BASE_URL } from "../config";
 import { Briefcase, MapPin, ExternalLink, CheckCircle, Search, AlertCircle, Bookmark, CheckSquare } from "lucide-react";
 
 function Jobs() {
@@ -32,7 +33,7 @@ function Jobs() {
     try {
       const userSkills = currentAnalysis?.skills_detected || [];
       const skillsQuery = userSkills.length > 0 ? `&skills=${encodeURIComponent(userSkills.join(","))}` : "";
-      const res = await fetch(`http://localhost:8000/jobs?role=${encodeURIComponent(role)}&location=${encodeURIComponent(loc)}${skillsQuery}`);
+      const res = await fetch(`${API_BASE_URL}/jobs?role=${encodeURIComponent(role)}&location=${encodeURIComponent(loc)}${skillsQuery}`);
       const data = await res.json();
 
       if (data.configured === false) {
