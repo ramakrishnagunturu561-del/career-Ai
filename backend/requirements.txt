@@ -9,4 +9,4 @@ transformers>=4.30.0
 optimum[onnxruntime]>=1.12.0
 torch>=2.0.0
 python-dotenv>=1.0.0
-scikit-learn
+scikit-learn==1.6.1
