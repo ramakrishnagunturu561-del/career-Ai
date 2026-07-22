@@ -1,3 +1,5 @@
+import os
+import logging
 from pathlib import Path
 import shutil
 import tempfile
@@ -11,6 +13,7 @@ from pydantic import BaseModel
 from fastapi import FastAPI, UploadFile, File, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
+logger = logging.getLogger(__name__)
 
 from resume_parser import (
     extract_text_from_pdf,
@@ -19,7 +22,8 @@ from resume_parser import (
 
 from career_predictor import (
     predict_career,
-    analyze_skill_gap
+    analyze_skill_gap,
+    get_ml_status
 )
 
 from ai_interview import (
@@ -84,7 +88,8 @@ def home():
 @app.get("/health")
 def health():
     return {
-        "status": "healthy"
+        "status": "healthy",
+        "ml_model": get_ml_status()
     }
 
 
@@ -121,14 +126,28 @@ async def analyze_resume(file: UploadFile = File(...)):
         if not skills:
             raise HTTPException(status_code=400, detail="No supported technical skills detected in resume.")
 
-        # ML Career prediction
-        prediction = predict_career(skills)
+        # ML Career prediction with resource error handling
+        try:
+            prediction = predict_career(skills)
+        except Exception as e:
+            logger.error(f"Career prediction failed: {e}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"ML Model initialization or prediction error: {str(e)}"
+            )
 
         if not prediction:
             raise HTTPException(status_code=500, detail="Career prediction failed.")
 
         # Skill gap analysis
-        skill_gap = analyze_skill_gap(skills, prediction["best_career"])
+        try:
+            skill_gap = analyze_skill_gap(skills, prediction["best_career"])
+        except Exception as e:
+            logger.error(f"Skill gap analysis failed: {e}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Skill gap analysis error: {str(e)}"
+            )
 
         return {
             "success": True,
@@ -230,3 +249,9 @@ def get_internships_endpoint(
     """Fetches real-time internships from backend provider service abstraction."""
     skills_list = [s.strip() for s in skills.split(",")] if skills else []
     return fetch_real_jobs(query=role, location=location, is_internship=True, page=page, candidate_skills=skills_list)
+
+
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.getenv("PORT", 10000))
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True)

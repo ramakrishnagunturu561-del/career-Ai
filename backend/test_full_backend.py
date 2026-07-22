@@ -15,10 +15,11 @@ def run_all_backend_tests():
     assert res.status_code == 200
     print("[PASS] GET / ->", res.json(), flush=True)
 
-    # 2. GET /health
+    # 2. GET /health (before ML load)
     res = client.get("/health")
     assert res.status_code == 200
-    print("[PASS] GET /health ->", res.json(), flush=True)
+    assert res.json().get("ml_model") == "not_loaded"
+    print("[PASS] GET /health (before ML load) ->", res.json(), flush=True)
 
     # 3. GET /ai-interview/health
     res = client.get("/ai-interview/health")
@@ -33,6 +34,12 @@ def run_all_backend_tests():
     data = res.json()
     assert data["success"] is True
     print(f"[PASS] POST /analyze-resume -> Role: {data['best_career']['role']} ({data['best_career']['confidence']}%), Skills: {len(data['skills_detected'])}", flush=True)
+
+    # 4b. GET /health (after ML load)
+    res = client.get("/health")
+    assert res.status_code == 200
+    assert res.json().get("ml_model") == "loaded"
+    print("[PASS] GET /health (after ML load) ->", res.json(), flush=True)
 
     # 5. POST /generate-roadmap
     res = client.post("/generate-roadmap", json={
