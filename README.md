@@ -1,419 +1,862 @@
-# 🚀 CareerLens AI (Career-Ai)
+# CareerLens AI
 
-[![Python](https://img.shields.io/badge/Python-3.9+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
-[![Vite](https://img.shields.io/badge/Vite-8-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
+### AI-Powered Career Intelligence, Job Discovery & Interview Preparation Platform
 
-An end-to-end, AI-driven Career Intelligence, Resume Parser, Skill-Gap Analyzer, Application Tracker, and Mock Interview Simulator powered by Machine Learning and Natural Language Processing.
+CareerLens AI is an intelligent career guidance platform that analyzes a candidate's resume, identifies skills, predicts suitable career paths using Machine Learning, generates personalized learning roadmaps, discovers real-time jobs and internships, tracks applications, and provides AI-powered video and voice interview practice.
+
+The platform combines **Machine Learning, NLP, Local LLMs, Real-Time Job APIs, FastAPI, and React** into one complete career development ecosystem.
 
 ---
 
-## 📌 Table of Contents
+## Key Features
 
-- [Overview](#-overview)
-- [Key Features](#-key-features)
-- [Tech Stack](#-tech-stack)
-- [System Architecture](#-system-architecture)
-- [Project Directory Structure](#-project-directory-structure)
-- [Step-by-Step Installation & Setup](#-step-by-step-installation--setup)
-  - [1. Prerequisites](#1-prerequisites)
-  - [2. Clone Repository](#2-clone-repository)
-  - [3. Backend Setup & Environment Configuration](#3-backend-setup--environment-configuration)
-  - [4. Frontend Setup & Environment Configuration](#4-frontend-setup--environment-configuration)
-- [Environment Variables Guide](#-environment-variables-guide)
-- [API Reference & Usage](#-api-reference--usage)
-- [AI & Machine Learning Pipeline](#-ai--machine-learning-pipeline)
-- [Running Tests & Linting](#-running-tests--linting)
-- [Troubleshooting & FAQ](#-troubleshooting--faq)
-- [License](#-license)
+### AI Resume Analyzer
 
----
+Upload a PDF resume and automatically:
 
-## 🌟 Overview
+- Extract resume content
+- Detect technical skills
+- Analyze the candidate's profile
+- Predict the best career path
+- Display Top Career Matches
+- Calculate career confidence
+- Identify matched skills
+- Detect missing skills
+- Calculate skill coverage
 
-**CareerLens AI** empowers job seekers, students, and professionals by providing data-driven career recommendations and interview preparation. 
+Example:
 
-By analyzing PDF resumes using **PyMuPDF**, extracting technical skills with regex taxonomy, and converting skills into 384-dimensional dense vectors using **ONNX-accelerated Sentence Transformers (`all-MiniLM-L6-v2`)**, the platform predicts ideal career roles, pinpoints skill deficits, and offers interactive voice/text AI mock interviews.
+```text
+Detected Skills
 
----
+Python
+Machine Learning
+Deep Learning
+TensorFlow
+Scikit-learn
+FastAPI
+NLP
+Generative AI
+MongoDB
+MySQL
+Git
+GitHub
 
-## 🔥 Key Features
+Best Career Match
 
-| Feature | Description |
-| :--- | :--- |
-| 📄 **PDF Resume Parser** | Extracts raw text from uploaded PDF resumes instantly using `PyMuPDF` (`fitz`). |
-| 🔍 **Automated Skill Detection** | Scans extracted text against a pre-compiled tech taxonomy using regex boundary matching. |
-| 🧠 **ML Career Classifier** | Evaluates skill vector embeddings against a trained Scikit-Learn model to predict target career roles with confidence scores. |
-| 📊 **Skill Gap Analyzer** | Compares candidate skills against role requirements to highlight matched vs missing skills and output a coverage score. |
-| 🗺️ **Career Roadmap** | Interactive learning milestones and step-by-step skill development paths for tech roles. |
-| 💼 **Job & Internship Matcher** | Browse curated opportunities with smart skill-matching indicators and filters. |
-| 📋 **Kanban Application Tracker** | Track application statuses (`Applied`, `Interviewing`, `Offer`, `Rejected`) with notes and salary details. |
-| 🎙️ **AI Mock Interviewer** | Voice and text interview simulator with dynamic technical questions and real-time response evaluation. |
+AI ML Engineer
 
----
+Top Career Matches
 
-## 🛠️ Tech Stack
-
-### **Frontend**
-- **Framework:** React 19 (`vite`)
-- **Routing:** React Router v7 (`react-router-dom`)
-- **Icons:** Lucide React (`lucide-react`)
-- **Styling:** Custom CSS Design System (Dark Glassmorphism UI)
-- **Linter:** Oxlint (`oxlint`)
-
-### **Backend**
-- **Framework:** FastAPI (Python 3.9+)
-- **ASGI Server:** Uvicorn
-- **PDF Extraction:** PyMuPDF (`fitz`)
-- **NLP / ML:**
-  - `transformers` & `optimum.onnxruntime` (`sentence-transformers/all-MiniLM-L6-v2`)
-  - `scikit-learn` & `joblib`
-  - `pandas` & `numpy`
-
-### **Model Pipeline**
-- **Training Notebook:** `notebooks/CareerLens_AI_Model_Training.ipynb`
-- **Artifacts:** `model/career_classifier.pkl`, `model/career_skill_map.pkl`, `model/career_profiles.pkl`
-
----
-
-## 📐 System Architecture
-
-```mermaid
-flowchart TD
-    User([User / Candidate]) -->|Upload PDF Resume| ReactApp[React 19 Frontend\nhttp://localhost:5173]
-    User -->|Practice Mock Interview| ReactApp
-    User -->|Manage Applications| ReactApp
-
-    ReactApp -->|POST /analyze-resume| FastAPI[FastAPI Backend Server\nhttp://localhost:8000]
-    
-    subgraph Backend Pipeline
-        FastAPI --> PyMuPDF[PyMuPDF / Text Extractor]
-        PyMuPDF --> SkillExtractor[Regex Taxonomy Extractor]
-        SkillExtractor --> ONNX[ONNX Sentence Transformer\nall-MiniLM-L6-v2]
-        ONNX --> Pooling[Mean Pooling & L2 Normalization]
-        Pooling --> Classifier[Scikit-Learn Classifier\ncareer_classifier.pkl]
-        Classifier --> GapAnalysis[Skill Gap Analyzer\ncareer_skill_map.pkl]
-    end
-
-    GapAnalysis -->|JSON Prediction & Skill Gap| ReactApp
-    ReactApp -->|Render Results & Insights| User
+AI ML Engineer
+Full Stack Developer
+Generative AI Engineer
 ```
 
 ---
 
-## 📁 Project Directory Structure
+## Machine Learning Career Prediction
+
+CareerLens AI uses a trained Machine Learning pipeline to predict suitable career paths based on detected resume skills.
+
+Architecture:
+
+```text
+Resume
+   ↓
+PDF Text Extraction
+   ↓
+Skill Detection
+   ↓
+Sentence Embeddings
+   ↓
+ONNX Runtime
+   ↓
+Scikit-learn Career Classifier
+   ↓
+Career Prediction
+   ↓
+Skill Gap Analysis
+```
+
+The system uses an ONNX-based embedding pipeline for efficient local inference.
+
+---
+
+## Skill Gap Analysis
+
+CareerLens compares the candidate's current skills with skills relevant to the predicted career.
+
+It identifies:
+
+- Matched Skills
+- Missing Skills
+- Skill Coverage
+- Areas to Improve
+
+Example:
+
+```text
+Target Career
+
+AI ML Engineer
+
+Matched Skills
+
+Python
+Machine Learning
+Deep Learning
+TensorFlow
+Scikit-learn
+Pandas
+NumPy
+NLP
+
+Skills to Learn
+
+PyTorch
+Computer Vision
+Model Deployment
+Artificial Intelligence
+```
+
+---
+
+## Personalized AI Career Roadmap
+
+CareerLens generates a personalized learning roadmap based on:
+
+- Predicted career
+- Current skills
+- Matched skills
+- Missing skills
+- Skill coverage
+
+The roadmap can use the local **Ollama Llama 3.2** model to generate personalized recommendations.
+
+Example roadmap:
+
+```text
+Stage 1
+Foundation
+
+        ↓
+
+Stage 2
+Core AI/ML Skills
+
+        ↓
+
+Stage 3
+Advanced Technologies
+
+        ↓
+
+Stage 4
+Real-World Projects
+
+        ↓
+
+Stage 5
+Interview Preparation
+
+        ↓
+
+Stage 6
+Job Readiness
+```
+
+---
+
+## Real-Time Job Discovery
+
+CareerLens integrates with a live job API to discover current opportunities.
+
+Current integration:
+
+**Adzuna Jobs API**
+
+Users can search using:
+
+- Career role
+- Keywords
+- Location
+
+CareerLens displays information available from the live provider, such as:
+
+- Job title
+- Company
+- Location
+- Description
+- Employment type
+- Posted date
+- Source
+- Real application URL
+
+No fake job listings are used as a fallback when the live service is unavailable.
+
+---
+
+## CareerLens Skill Match
+
+CareerLens compares detected resume skills with information available in job and internship listings.
+
+The system can calculate a personalized:
+
+**CareerLens Skill Match**
+
+This helps candidates understand how closely their current profile aligns with an opportunity.
+
+The score is a CareerLens recommendation metric and should not be interpreted as an employer ATS score.
+
+---
+
+## Real-Time Internship Discovery
+
+CareerLens also discovers internships relevant to the candidate's career.
+
+Examples include:
+
+- AI Internships
+- Machine Learning Internships
+- Data Science Internships
+- Software Development Internships
+- NLP Internships
+- Generative AI Internships
+
+Internship results are retrieved from the configured live opportunity provider.
+
+---
+
+## Application Tracker
+
+CareerLens includes a built-in application tracking system.
+
+Users can:
+
+- Save jobs
+- Save internships
+- Open real application links
+- Track application progress
+- Update application status
+- Remove tracked opportunities
+
+Supported statuses include:
+
+```text
+Saved
+Application Opened
+Applied
+Interview
+Selected
+Rejected
+```
+
+Application data is persisted locally in the current implementation.
+
+---
+
+## AI Video & Voice Interview
+
+CareerLens provides an AI-powered mock interview environment personalized using the candidate's resume.
+
+The interview system uses:
+
+**Ollama + Llama 3.2:3b**
+
+Questions can be generated based on:
+
+- Target career
+- Resume skills
+- Skill gaps
+- Selected difficulty
+
+Difficulty levels:
+
+```text
+Beginner
+Intermediate
+Advanced
+```
+
+---
+
+## Video Interview Experience
+
+CareerLens supports browser-based webcam and microphone functionality.
+
+Features include:
+
+- Live webcam preview
+- Camera ON/OFF
+- Microphone ON/OFF
+- Camera permission handling
+- Microphone permission handling
+- Automatic media-track cleanup
+
+Browser Media APIs are used for the video interview experience.
+
+---
+
+## Voice Interview
+
+Candidates can answer interview questions using voice where browser support is available.
+
+Features:
+
+```text
+AI Question
+      ↓
+Text-to-Speech
+      ↓
+Candidate Voice Answer
+      ↓
+Speech-to-Text
+      ↓
+Transcript Review
+      ↓
+Submit Answer
+      ↓
+Ollama Evaluation
+      ↓
+Score + Feedback
+```
+
+The application can use:
+
+- Web Speech API for Speech-to-Text
+- Browser SpeechSynthesis for Text-to-Speech
+
+A typed-answer fallback can be used when speech recognition is unsupported.
+
+---
+
+## AI Interview Evaluation
+
+Candidate answers are evaluated using the local Ollama model.
+
+Evaluation can include:
+
+- Technical Accuracy
+- Relevance
+- Clarity
+- Overall Score
+- Strengths
+- Areas for Improvement
+- Detailed Feedback
+- Suggested Better Answer
+
+The evaluation is based on the candidate's submitted answer rather than random scoring.
+
+---
+
+## System Architecture
+
+```text
+                     CAREERLENS AI
+
+                           │
+                           ▼
+
+                     Resume Upload
+
+                           │
+                           ▼
+
+                    Resume Parser
+
+                           │
+                           ▼
+
+                    Skill Detection
+
+                           │
+                           ▼
+
+             ONNX + ML Career Prediction
+
+                           │
+             ┌─────────────┼─────────────┐
+             ▼             ▼             ▼
+
+        Career         Skill Gap      Top Career
+       Prediction      Analysis        Matches
+
+             │
+             ▼
+
+       Personalized Roadmap
+       Ollama Llama 3.2:3b
+
+             │
+             ▼
+
+       Real-Time Opportunities
+
+         ┌─────────┴─────────┐
+         ▼                   ▼
+
+       Jobs              Internships
+
+         └─────────┬─────────┘
+                   ▼
+
+           Application Tracker
+
+                   │
+                   ▼
+
+          AI Video + Voice Interview
+
+                   │
+                   ▼
+
+            FastAPI → Ollama
+
+                   │
+                   ▼
+
+        AI Evaluation & Feedback
+```
+
+---
+
+## Technology Stack
+
+### Frontend
+
+- React.js
+- Vite
+- React Router
+- JavaScript
+- CSS
+- Browser Media APIs
+- Web Speech API
+- SpeechSynthesis API
+
+### Backend
+
+- Python
+- FastAPI
+- Uvicorn
+- REST APIs
+
+### Machine Learning
+
+- Scikit-learn
+- ONNX Runtime
+- Sentence Transformer-based embeddings
+- Joblib
+- Pandas
+- NumPy
+
+### Local Generative AI
+
+- Ollama
+- Llama 3.2:3b
+
+### Real-Time Opportunity Data
+
+- Adzuna Jobs API
+
+### Development Tools
+
+- Git
+- GitHub
+- VS Code
+- Swagger / OpenAPI
+
+---
+
+## Project Structure
 
 ```text
 career-Ai/
+│
 ├── backend/
-│   ├── main.py                     # FastAPI API entrypoint & endpoints
-│   ├── resume_parser.py            # PDF text extraction & skill matching logic
-│   ├── career_predictor.py          # ONNX Embeddings & Classifier prediction
-│   ├── requirements.txt            # Python backend dependencies
-│   ├── .env.example                # Backend environment template
-│   ├── test_career.py              # Unit test script for career predictor
-│   └── test_parser.py              # Unit test script for resume parser
+│   ├── main.py
+│   ├── resume_parser.py
+│   ├── career_predictor.py
+│   ├── ai_interview.py
+│   ├── jobs_service.py
+│   ├── requirements.txt
+│   ├── .env.example
+│   └── tests/
 │
 ├── frontend/
-│   ├── public/                     # Static public assets
 │   ├── src/
-│   │   ├── components/             # Navigation & reusable UI components
-│   │   │   └── Sidebar.jsx
-│   │   ├── pages/                  # Application views
-│   │   │   ├── Dashboard.jsx       # Analytics dashboard
-│   │   │   ├── ResumeAnalyzer.jsx  # Resume analysis & ML results
-│   │   │   ├── CareerRoadmap.jsx   # Interactive milestone roadmaps
-│   │   │   ├── Jobs.jsx            # Job discovery & search
-│   │   │   ├── Internships.jsx     # Internship opportunities
-│   │   │   ├── Applications.jsx    # Application tracker
-│   │   │   └── AIInterview.jsx     # Speech/text mock interview trainer
-│   │   ├── App.jsx                 # Main application routes
-│   │   ├── App.css                 # Global CSS design tokens
-│   │   └── main.jsx                # React root renderer
-│   ├── .env.example                # Frontend environment template
-│   ├── package.json                # Frontend dependencies & scripts
-│   └── vite.config.js              # Vite server configuration
+│   │   ├── components/
+│   │   ├── pages/
+│   │   │   ├── Dashboard.jsx
+│   │   │   ├── ResumeAnalyzer.jsx
+│   │   │   ├── CareerRoadmap.jsx
+│   │   │   ├── Jobs.jsx
+│   │   │   ├── Internships.jsx
+│   │   │   ├── Applications.jsx
+│   │   │   └── AIInterview.jsx
+│   │   ├── App.jsx
+│   │   └── main.jsx
+│   │
+│   ├── package.json
+│   └── .env.example
 │
-├── model/                          # Machine Learning artifacts
-│   ├── career_classifier.pkl       # Pre-trained scikit-learn classifier
-│   ├── career_profiles.pkl         # Vector profiles for career roles
-│   └── career_skill_map.pkl        # Skill requirement mappings per role
+├── model/
 │
 ├── notebooks/
-│   └── CareerLens_AI_Model_Training.ipynb  # ML Training notebook
 │
-├── test_resume.pdf                 # Sample PDF resume for testing
-└── README.md                       # Project Documentation
+├── .gitignore
+│
+└── README.md
 ```
 
----
-
-## 💻 Step-by-Step Installation & Setup
-
-### 1. Prerequisites
-
-Before starting, ensure you have installed:
-- **Python:** `3.9` or higher ([Download Python](https://www.python.org/downloads/))
-- **Node.js:** `18.0` or higher ([Download Node.js](https://nodejs.org/))
-- **Git:** Installed on your local machine
+The exact structure may vary slightly as the project evolves.
 
 ---
 
-### 2. Clone Repository
+# Installation
+
+## 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/career-Ai.git
+git clone https://github.com/ramakrishnagunturu561-del/career-Ai.git
+
 cd career-Ai
 ```
 
 ---
 
-### 3. Backend Setup & Environment Configuration
+## 2. Create Python Virtual Environment
 
-Navigate to the `backend` directory, create a Python virtual environment, install dependencies, and configure environment variables.
+Python 3.12 is recommended for the current local setup.
 
-#### **On Windows (PowerShell / Command Prompt):**
+Windows:
 
 ```powershell
-# 1. Navigate to backend directory
-cd backend
+py -3.12 -m venv venv
 
-# 2. Create Python virtual environment
-python -m venv venv
-
-# 3. Activate the virtual environment
-# In PowerShell:
 .\venv\Scripts\Activate.ps1
-
-# (If PowerShell gives an execution policy script error, run:
-#  Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process)
-
-# In Command Prompt (cmd):
-# venv\Scripts\activate.bat
-
-# 4. Upgrade pip
-python -m pip install --upgrade pip
-
-# 5. Install required dependencies
-pip install -r requirements.txt
-
-# 6. Set up environment variables
-Copy-Item .env.example .env
-
-# 7. Start the FastAPI server with auto-reload
-uvicorn main:app --reload --host 127.0.0.1 --port 8000
 ```
 
+Install backend dependencies:
 
-#### **On Linux / macOS (Bash / Zsh):**
-
-```bash
-# 1. Navigate to backend directory
-cd backend
-
-# 2. Create Python virtual environment
-python3 -m venv venv
-
-# 3. Activate the virtual environment
-source venv/bin/activate
-
-# 4. Upgrade pip
-pip install --upgrade pip
-
-# 5. Install required dependencies
-pip install -r requirements.txt
-
-# 6. Set up environment variables
-cp .env.example .env
-
-# 7. Start the FastAPI server
-uvicorn main:app --reload --host 127.0.0.1 --port 8000
+```powershell
+python -m pip install -r backend\requirements.txt
 ```
-
-> 💡 **Backend API Server URL:** `http://localhost:8000`  
-> 📑 **Interactive Swagger API Docs:** `http://localhost:8000/docs`
 
 ---
 
-### 4. Frontend Setup & Environment Configuration
+## 3. Install Ollama
 
-Open a **new terminal window**, navigate to the `frontend` directory, install packages, create `.env`, and start the Vite dev server.
+Install Ollama from:
+
+https://ollama.com/
+
+Verify:
 
 ```bash
-# 1. Navigate to frontend directory
+ollama --version
+```
+
+Download the AI model:
+
+```bash
+ollama pull llama3.2:3b
+```
+
+Test:
+
+```bash
+ollama run llama3.2:3b
+```
+
+The default local Ollama endpoint is:
+
+```text
+http://localhost:11434
+```
+
+---
+
+## 4. Configure Environment Variables
+
+Create:
+
+```text
+backend/.env
+```
+
+Use `backend/.env.example` as a template.
+
+Example:
+
+```env
+JOBS_API_PROVIDER=adzuna
+
+JOBS_API_APP_ID=YOUR_APPLICATION_ID
+
+JOBS_API_KEY=YOUR_APPLICATION_KEY
+```
+
+Never commit real API credentials.
+
+The `.env` file must remain ignored by Git.
+
+---
+
+## 5. Start FastAPI Backend
+
+From the project root:
+
+```powershell
+.\venv\Scripts\Activate.ps1
+
+cd backend
+
+python -m uvicorn main:app --reload
+```
+
+Backend:
+
+```text
+http://127.0.0.1:8000
+```
+
+Swagger API documentation:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+---
+
+## 6. Start React Frontend
+
+Open another terminal:
+
+```powershell
 cd frontend
 
-# 2. Install Node dependencies
 npm install
 
-# 3. Set up environment variables
-# On Windows PowerShell:
-Copy-Item .env.example .env
-
-# On Linux/macOS:
-cp .env.example .env
-
-# 4. Start Vite development server
 npm run dev
 ```
 
-> 🌐 **Frontend App URL:** `http://localhost:5173`
+Open the URL displayed by Vite, typically:
 
----
-
-## ⚙️ Environment Variables Guide
-
-### **Backend Configuration (`backend/.env`)**
-
-| Variable | Default Value | Description |
-| :--- | :--- | :--- |
-| `HOST` | `0.0.0.0` | Host interface address for FastAPI server |
-| `PORT` | `8000` | Port number for FastAPI server |
-| `DEBUG` | `True` | Enable debug logging and auto-reload |
-| `MODEL_NAME` | `sentence-transformers/all-MiniLM-L6-v2` | Hugging Face model identifier |
-| `CORS_ORIGINS` | `http://localhost:5173` | Allowed cross-origin frontend URLs |
-| `OPENAI_API_KEY` | *(Optional)* | API key for OpenAI LLM integrations |
-| `GEMINI_API_KEY` | *(Optional)* | API key for Google Gemini AI integrations |
-
-### **Frontend Configuration (`frontend/.env`)**
-
-| Variable | Default Value | Description |
-| :--- | :--- | :--- |
-| `VITE_API_BASE_URL` | `http://localhost:8000` | FastAPI backend URL endpoint |
-
----
-
-## 📡 API Reference & Usage
-
-### 1. Health Check
-Checks if the backend API server is active and running.
-
-- **Endpoint:** `GET /health`
-- **cURL Example:**
-  ```bash
-  curl -X GET http://localhost:8000/health
-  ```
-- **Response (`200 OK`):**
-  ```json
-  {
-    "status": "healthy"
-  }
-  ```
-
----
-
-### 2. Analyze PDF Resume
-Uploads a candidate PDF resume, extracts skills, predicts top careers, and performs skill gap analysis.
-
-- **Endpoint:** `POST /analyze-resume`
-- **Headers:** `Content-Type: multipart/form-data`
-- **Body Parameters:**
-  - `file`: PDF file binary (e.g. `resume.pdf`)
-
-- **cURL Example:**
-  ```bash
-  curl -X POST "http://localhost:8000/analyze-resume" \
-    -H "accept: application/json" \
-    -H "Content-Type: multipart/form-data" \
-    -F "file=@test_resume.pdf"
-  ```
-
-- **Response (`200 OK`):**
-  ```json
-  {
-    "success": true,
-    "filename": "test_resume.pdf",
-    "skills_detected": [
-      "FastAPI",
-      "Git",
-      "Machine Learning",
-      "Python",
-      "React",
-      "SQL"
-    ],
-    "total_skills": 6,
-    "best_career": {
-      "role": "AI / ML Engineer",
-      "confidence": 88.75
-    },
-    "top_careers": [
-      { "career": "AI / ML Engineer", "confidence": 88.75 },
-      { "career": "Backend Developer", "confidence": 76.40 },
-      { "career": "Data Scientist", "confidence": 69.15 }
-    ],
-    "skill_gap": {
-      "coverage": 75.0,
-      "matched_skills": ["Python", "Machine Learning", "SQL"],
-      "missing_skills": ["PyTorch", "NLP", "MLOps"]
-    }
-  }
-  ```
-
----
-
-## 🧠 AI & Machine Learning Pipeline
-
-1. **PDF Text Extraction:** Uses `fitz.open()` from **PyMuPDF** to extract clean string content per page.
-2. **Regex Taxonomy Extraction:** Applies standard regex pattern matching with word boundaries `(?<!\w)<skill>(?!\w)` to capture skills safely.
-3. **ONNX Vectorization:** Generates embeddings using `AutoTokenizer` and `ORTModelForFeatureExtraction` with `sentence-transformers/all-MiniLM-L6-v2`.
-4. **Mean Pooling & L2 Normalization:** Computes pooled sentence embeddings normalized to unit length.
-5. **Role Classification:** Scores embeddings against trained Scikit-Learn estimators (`career_classifier.pkl`).
-6. **Gap Calculation:** Cross-references extracted skills with the targeted role's required skill set (`career_skill_map.pkl`).
-
----
-
-## 🧪 Running Tests & Linting
-
-### **Run Backend Tests**
-
-To run unit tests for the resume parser and career predictor:
-
-```bash
-cd backend
-# Run parser test
-python test_parser.py
-
-# Run career predictor test
-python test_career.py
-```
-
-### **Run Frontend Linter**
-
-To lint frontend React code using Oxlint:
-
-```bash
-cd frontend
-npm run lint
+```text
+http://localhost:5173
 ```
 
 ---
 
-## ❓ Troubleshooting & FAQ
+# Running CareerLens AI
 
-<details>
-<summary><b>Q: <code>ModuleNotFoundError: No module named 'fitz'</code></b></summary>
-<br/>
-<b>Solution:</b> Ensure you installed <code>PyMuPDF</code> in your virtual environment:
-<pre><code>pip install PyMuPDF</code></pre>
-Note: Do not install the deprecated <code>fitz</code> package.
-</details>
+For full functionality, ensure these services are available:
 
-<details>
-<summary><b>Q: CORS Error when connecting Frontend to Backend</b></summary>
-<br/>
-<b>Solution:</b> Ensure your FastAPI <code>main.py</code> or <code>.env</code> permits <code>http://localhost:5173</code> in origins. Check that backend is actively running on port <code>8000</code>.
-</details>
+```text
+1. Ollama
+       ↓
+2. FastAPI Backend
+       ↓
+3. React Frontend
+```
 
-<details>
-<summary><b>Q: ONNX / Transformers model download issues</b></summary>
-<br/>
-<b>Solution:</b> On first run, the backend will automatically download <code>sentence-transformers/all-MiniLM-L6-v2</code> weights (~90MB). Make sure you have an active internet connection.
-</details>
+Then use the application:
+
+```text
+Upload Resume
+
+      ↓
+
+Analyze Resume
+
+      ↓
+
+View Career Prediction
+
+      ↓
+
+Analyze Skill Gaps
+
+      ↓
+
+Generate Career Roadmap
+
+      ↓
+
+Discover Jobs / Internships
+
+      ↓
+
+Track Applications
+
+      ↓
+
+Start AI Video + Voice Interview
+
+      ↓
+
+Receive AI Feedback
+```
 
 ---
 
-## 📄 License
+# API Endpoints
 
-Distributed under the **MIT License**. See `LICENSE` for more information.
+Examples of backend endpoints used by CareerLens include:
+
+```text
+GET  /
+GET  /health
+
+POST /analyze-resume
+
+POST /generate-roadmap
+
+GET  /jobs
+GET  /internships
+
+GET  /ai-interview/health
+POST /ai-interview/start
+POST /ai-interview/evaluate
+```
+
+Interactive API documentation is available at:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+---
+
+# Security
+
+CareerLens follows basic security practices:
+
+- API keys are stored in environment variables
+- `.env` files are excluded from Git
+- API credentials are not exposed in frontend code
+- Real application URLs are opened through their source
+- Ollama runs locally
+- Webcam and microphone require explicit browser permission
+
+Never commit:
+
+```text
+.env
+API keys
+access tokens
+passwords
+private credentials
+```
+
+If a credential is accidentally exposed publicly, revoke or rotate it immediately.
+
+---
+
+# Current Limitations
+
+- Ollama currently runs locally, so cloud deployment requires a different production AI architecture or a remotely accessible model service.
+- Job and internship availability depends on the configured external provider.
+- Speech recognition support depends on the user's browser.
+- Application submission generally occurs on external employer/source websites; CareerLens tracks the process but does not claim external submission unless confirmed.
+- Career predictions and skill-match scores are recommendation tools and should not be treated as guaranteed hiring outcomes.
+
+---
+
+# Future Enhancements
+
+Planned improvements may include:
+
+- User authentication
+- PostgreSQL / MongoDB persistence
+- Cloud deployment
+- Multi-user dashboards
+- Advanced resume scoring
+- AI resume optimization
+- Cover letter generation
+- Job alerts
+- Email notifications
+- Advanced application analytics
+- Interview history analytics
+- Coding interview rounds
+- Behavioral interview modes
+- Recruiter dashboard
+- More job providers
+- Advanced RAG-based career guidance
+
+---
+
+# Project Vision
+
+CareerLens AI aims to create a complete AI-powered career ecosystem where candidates can move through the entire career preparation journey:
+
+```text
+Understand My Resume
+
+        ↓
+
+Find My Best Career
+
+        ↓
+
+Identify My Skill Gaps
+
+        ↓
+
+Learn What I Need
+
+        ↓
+
+Find Real Opportunities
+
+        ↓
+
+Track My Applications
+
+        ↓
+
+Practice Realistic Interviews
+
+        ↓
+
+Improve With AI Feedback
+
+        ↓
+
+Become Job Ready
+```
+
+---
+
+## Author
+
+**Guntru Venkata Ramakrishna**
+
+B.Tech — Artificial Intelligence & Machine Learning
+
+GitHub:
+
+https://github.com/ramakrishnagunturu561-del
+
+Project Repository:
+
+https://github.com/ramakrishnagunturu561-del/career-Ai
+
+---
+
+## Disclaimer
+
+CareerLens AI provides AI-assisted career recommendations, opportunity discovery, and interview practice.
+
+Career predictions, skill-match percentages, and AI interview feedback are advisory and should not be interpreted as guarantees of employment, employer ATS scores, or official hiring decisions.
+
+Job and internship information is provided through external data sources and may change over time.
+
+---
+
+## Support
+
+If you find CareerLens AI useful, consider starring the repository.
+
+Contributions, suggestions, and improvements are welcome.
