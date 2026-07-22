@@ -1,11 +1,15 @@
-# Python
+# Python & Environment
 venv/
 .env
+*.env
+backend/.env
+frontend/.env
 __pycache__/
 *.py[cod]
 *$py.class
 .ipynb_checkpoints
 .pytest_cache/
+
 
 # VS Code
 .vscode/

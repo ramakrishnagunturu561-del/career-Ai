@@ -1,159 +1,20 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState, useRef } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Sparkles, ChevronRight, RotateCcw, LayoutDashboard,
-  CheckCircle, AlertCircle, Brain,
+  CheckCircle, AlertCircle, Brain, Camera, CameraOff,
+  Mic, MicOff, Volume2, VolumeX, Radio, Check, RefreshCw
 } from "lucide-react";
 
-/* ═══════════════════════════════════════════════════════════════
-   QUESTION BANK  (local / mock — no LLM API required)
-   Plug in Gemini / OpenAI by replacing generateQuestions()
-══════════════════════════════════════════════════════════════ */
-const QUESTION_BANK = {
-  beginner: {
-    "AI ML Engineer": [
-      "What is the difference between supervised and unsupervised learning?",
-      "What is overfitting and how can it be prevented?",
-      "What is a neural network and how does it work?",
-      "Explain what Python libraries you have used for machine learning.",
-      "What is the purpose of a train-test split?",
-    ],
-    "Data Scientist": [
-      "What is the difference between mean, median, and mode?",
-      "What is data cleaning and why is it important?",
-      "What tools have you used for data visualization?",
-      "Explain what a correlation coefficient tells you.",
-      "What is the difference between a bar chart and a histogram?",
-    ],
-    "Software Engineer": [
-      "What is Object-Oriented Programming?",
-      "Explain the difference between a stack and a queue.",
-      "What is version control and why is Git important?",
-      "What is an API and how does REST work?",
-      "Explain time complexity in simple terms.",
-    ],
-    default: [
-      "Tell me about yourself and your technical background.",
-      "What programming languages are you most comfortable with?",
-      "Describe a technical challenge you have solved.",
-      "What motivated you to pursue this career path?",
-      "How do you stay updated with the latest technology trends?",
-    ],
-  },
-  intermediate: {
-    "AI ML Engineer": [
-      "Explain the bias-variance tradeoff and how it affects model selection.",
-      "How does backpropagation work in neural networks?",
-      "When would you use Random Forest over Gradient Boosting?",
-      "How do you handle class imbalance in a classification problem?",
-      "Explain the transformer architecture and self-attention mechanism.",
-    ],
-    "Data Scientist": [
-      "Explain the difference between L1 and L2 regularization.",
-      "How do you handle missing data in a production dataset?",
-      "Walk me through the steps of a complete data science project.",
-      "What metrics would you use to evaluate a classification model?",
-      "Explain the concept of feature engineering with an example.",
-    ],
-    "Software Engineer": [
-      "Explain the SOLID principles of software design.",
-      "What is a microservices architecture and when would you use it?",
-      "Explain database indexing and when it helps performance.",
-      "How would you design a URL shortening service?",
-      "What is the difference between concurrency and parallelism?",
-    ],
-    default: [
-      "Describe your most challenging technical project in detail.",
-      "How do you approach debugging a complex problem?",
-      "Explain how you would optimize a slow-performing system.",
-      "How do you ensure code quality in a team environment?",
-      "Walk me through a design decision you had to make recently.",
-    ],
-  },
-  advanced: {
-    "AI ML Engineer": [
-      "How would you design and deploy an ML pipeline at scale for millions of users?",
-      "Explain how you would implement a real-time recommendation engine.",
-      "Compare RLHF, DPO, and SFT for fine-tuning LLMs.",
-      "How would you detect and mitigate model drift in production?",
-      "Design a distributed training setup for a large language model.",
-    ],
-    "Data Scientist": [
-      "How would you build a causal inference model to evaluate an A/B test?",
-      "Explain Bayesian optimization for hyperparameter tuning.",
-      "How do you detect and address concept drift in streaming data?",
-      "Design a fraud detection system with very low false positive tolerance.",
-      "How would you handle multi-objective optimization in a recommendation system?",
-    ],
-    "Software Engineer": [
-      "How would you design a distributed message queue like Kafka?",
-      "Explain your approach to building a system that handles 1 million requests per second.",
-      "How do you implement distributed transactions across microservices?",
-      "Design a global CDN caching strategy for dynamic content.",
-      "How would you architect a zero-downtime deployment pipeline?",
-    ],
-    default: [
-      "How have you led a complex technical initiative from ideation to production?",
-      "Describe a system design challenge at scale that you have solved.",
-      "How do you approach technical debt in a rapidly growing product?",
-      "Explain how you mentor junior developers effectively.",
-      "What is your philosophy on engineering trade-offs?",
-    ],
-  },
-};
-
-/* ── Pick questions for this session ───────────────────────── */
-function generateQuestions(career, difficulty) {
-  const level = QUESTION_BANK[difficulty] || QUESTION_BANK.beginner;
-  const keys = Object.keys(level).filter((k) => k !== "default");
-  const matchedKey = keys.find(
-    (k) =>
-      career?.toLowerCase().includes(k.toLowerCase().split(" ")[0]) ||
-      k.toLowerCase().includes(career?.toLowerCase().split(" ")[0])
-  );
-  return level[matchedKey] || level.default;
-}
-
-/* ── Mock evaluation (replace with real LLM call later) ─────── */
-function mockEvaluate(question, answer, difficulty) {
-  const wordCount = answer.trim().split(/\s+/).length;
-  let base = Math.min(10, Math.max(3, Math.round(wordCount / 10)));
-
-  if (difficulty === "advanced") base = Math.min(base, 8);
-  if (difficulty === "beginner") base = Math.min(base + 1, 10);
-
-  const score = Math.min(10, base + Math.floor(Math.random() * 2));
-
-  return {
-    score,
-    strengths: score >= 7
-      ? ["Clear explanation", "Good use of technical terminology"]
-      : ["Attempted to answer the question", "Shows basic understanding"],
-    improvements: score < 8
-      ? ["Add specific examples or code snippets", "Elaborate on edge cases and trade-offs"]
-      : ["Consider discussing real-world applications"],
-    suggestedAnswer: `A strong answer to this question would cover: (1) a clear definition, (2) a concrete example from your experience, and (3) key trade-offs or considerations relevant to production scenarios.`,
-    isRealAI: false,
-  };
-}
-
-/* ── Score label helper ─────────────────────────────────────── */
-function performanceLabel(score) {
-  if (score >= 8.5) return { label: "Excellent", color: "#6ee7b7" };
-  if (score >= 6.5) return { label: "Good", color: "#a598ff" };
-  if (score >= 4.5) return { label: "Average", color: "#fbbf24" };
-  return { label: "Needs Improvement", color: "#fca5a5" };
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   MAIN COMPONENT
-══════════════════════════════════════════════════════════════ */
 function AIInterview() {
   const [analysis, setAnalysis] = useState(null);
   const [targetRole, setTargetRole] = useState("");
   const [candidateSkills, setCandidateSkills] = useState([]);
 
-  // phases: "setup" | "interview" | "feedback" | "report"
+  // Ollama Health State
+  const [ollamaStatus, setOllamaStatus] = useState({ checked: false, online: false, modelAvailable: false, error: "" });
+
+  // Interview phases: "setup" | "interview" | "feedback" | "report"
   const [phase, setPhase] = useState("setup");
   const [difficulty, setDifficulty] = useState("intermediate");
   const [questions, setQuestions] = useState([]);
@@ -163,37 +24,343 @@ function AIInterview() {
   const [evaluating, setEvaluating] = useState(false);
   const [currentFeedback, setCurrentFeedback] = useState(null);
   const [sessionAnswers, setSessionAnswers] = useState([]);
+  const [startingInterview, setStartingInterview] = useState(false);
+
+  // Video & Audio Stream States
+  const [mediaStream, setMediaStream] = useState(null);
+  const [cameraOn, setCameraOn] = useState(true);
+  const [micOn, setMicOn] = useState(true);
+  const [mediaError, setMediaError] = useState("");
+  const videoRef = useRef(null);
+
+  // Speech Recognition (STT) State
+  const [isListening, setIsListening] = useState(false);
+  const [sttSupported, setSttSupported] = useState(true);
+  const recognitionRef = useRef(null);
+
+  // Text-to-Speech (TTS) State
+  const [ttsMuted, setTtsMuted] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+
+  const navigate = useNavigate();
 
   /* Load analysis from localStorage */
   useEffect(() => {
     const raw = localStorage.getItem("careerLensAnalysis");
-    if (!raw) return;
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw);
+        setAnalysis(parsed);
+        setTargetRole(parsed.best_career?.role || "Software Professional");
+        setCandidateSkills(parsed.skills_detected || []);
+      } catch (e) {
+        console.error("Failed to parse analysis:", e);
+      }
+    }
+    checkHealth();
+  }, []);
+
+  /* Check Ollama Health via FastAPI */
+  const checkHealth = async () => {
     try {
-      const parsed = JSON.parse(raw);
-      setAnalysis(parsed);
-      setTargetRole(parsed.best_career?.role || "Software Professional");
-      setCandidateSkills(parsed.skills_detected || []);
-    } catch (e) {
-      console.error("Failed to load analysis:", e);
+      const res = await fetch("http://localhost:8000/ai-interview/health");
+      if (res.ok) {
+        const data = await res.json();
+        setOllamaStatus({
+          checked: true,
+          online: data.online,
+          modelAvailable: data.model_available,
+          error: data.online ? "" : "Ollama is not running on http://localhost:11434"
+        });
+      } else {
+        setOllamaStatus({ checked: true, online: false, modelAvailable: false, error: "Health check failed." });
+      }
+    } catch (err) {
+      setOllamaStatus({ checked: true, online: false, modelAvailable: false, error: "Cannot reach FastAPI backend." });
+    }
+  };
+
+  /* Initialize Web Media Stream (Camera + Mic) */
+  const startWebcam = async () => {
+    setMediaError("");
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      setMediaStream(stream);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+      setCameraOn(true);
+      setMicOn(true);
+    } catch (err) {
+      console.warn("Media devices access error:", err);
+      setMediaError("Could not access camera/microphone. Please verify browser permissions.");
+    }
+  };
+
+  /* Stop Web Media Stream */
+  const stopWebcam = () => {
+    if (mediaStream) {
+      mediaStream.getTracks().forEach((track) => track.stop());
+      setMediaStream(null);
+    }
+  };
+
+  /* Cleanup on Component Unmount */
+  useEffect(() => {
+    return () => {
+      stopWebcam();
+      if (recognitionRef.current) {
+        try { recognitionRef.current.stop(); } catch {}
+      }
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, [mediaStream]);
+
+  /* Toggle Camera Track */
+  const toggleCamera = () => {
+    if (mediaStream) {
+      const videoTrack = mediaStream.getVideoTracks()[0];
+      if (videoTrack) {
+        videoTrack.enabled = !videoTrack.enabled;
+        setCameraOn(videoTrack.enabled);
+      }
+    }
+  };
+
+  /* Toggle Microphone Track */
+  const toggleMic = () => {
+    if (mediaStream) {
+      const audioTrack = mediaStream.getAudioTracks()[0];
+      if (audioTrack) {
+        audioTrack.enabled = !audioTrack.enabled;
+        setMicOn(audioTrack.enabled);
+      }
+    }
+  };
+
+  /* Initialize Web Speech Recognition (STT) */
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      const rec = new SpeechRecognition();
+      rec.continuous = true;
+      rec.interimResults = true;
+      rec.lang = "en-US";
+
+      rec.onresult = (event) => {
+        let transcript = "";
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          transcript += event.results[i][0].transcript;
+        }
+        setAnswer((prev) => (prev ? `${prev} ${transcript}` : transcript));
+      };
+
+      rec.onerror = (e) => {
+        console.warn("STT Error:", e.error);
+        setIsListening(false);
+      };
+
+      rec.onend = () => {
+        setIsListening(false);
+      };
+
+      recognitionRef.current = rec;
+    } else {
+      setSttSupported(false);
     }
   }, []);
 
-  /* ── No resume ───────────────────────────────────────────── */
+  const toggleListening = () => {
+    if (!recognitionRef.current) return;
+    if (isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    } else {
+      try {
+        recognitionRef.current.start();
+        setIsListening(true);
+      } catch (err) {
+        console.warn("STT start error:", err);
+      }
+    }
+  };
+
+  /* TTS Speaker helper */
+  const speakQuestion = (text) => {
+    if (ttsMuted || !window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 0.95;
+    utterance.pitch = 1.0;
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+    window.speechSynthesis.speak(utterance);
+  };
+
+  /* Attach mediaStream to video tag when rendering interview phase */
+  useEffect(() => {
+    if (phase === "interview" && mediaStream && videoRef.current) {
+      videoRef.current.srcObject = mediaStream;
+    }
+  }, [phase, mediaStream]);
+
+  /* Speak question on phase or Q change */
+  useEffect(() => {
+    if (phase === "interview" && questions[currentQ]) {
+      speakQuestion(questions[currentQ]);
+    }
+  }, [phase, currentQ, questions]);
+
+  /* Start Interview Handler */
+  const startInterview = async () => {
+    setStartingInterview(true);
+    await startWebcam();
+
+    try {
+      const res = await fetch("http://localhost:8000/ai-interview/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          skills: candidateSkills,
+          predicted_career: targetRole,
+          target_role: targetRole,
+          difficulty: difficulty,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.questions && data.questions.length > 0) {
+        setQuestions(data.questions);
+      }
+    } catch (err) {
+      console.warn("Interview start API error:", err);
+    } finally {
+      setStartingInterview(false);
+      setCurrentQ(0);
+      setAnswer("");
+      setCurrentFeedback(null);
+      setSessionAnswers([]);
+      setPhase("interview");
+    }
+  };
+
+  /* Submit Answer Handler */
+  const submitAnswer = async () => {
+    if (!answer.trim()) {
+      setAnswerError("Please type or speak your answer before submitting.");
+      return;
+    }
+
+    if (isListening && recognitionRef.current) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    }
+
+    if (window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+
+    setAnswerError("");
+    setEvaluating(true);
+
+    try {
+      const res = await fetch("http://localhost:8000/ai-interview/evaluate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          question: questions[currentQ],
+          answer: answer,
+          target_role: targetRole,
+          difficulty: difficulty,
+        }),
+      });
+
+      const data = await res.json();
+      const fb = {
+        score: data.score,
+        technical_accuracy: data.technical_accuracy || data.score,
+        relevance: data.relevance || data.score,
+        clarity: data.clarity || data.score,
+        strengths: data.strengths || [],
+        improvements: data.improvements || [],
+        feedback: data.feedback || "",
+        suggestedAnswer: data.suggested_answer || data.suggestedAnswer || "",
+        isRealAI: !!data.is_llm,
+      };
+
+      setCurrentFeedback({ ...fb, question: questions[currentQ], answer });
+      setSessionAnswers((prev) => [
+        ...prev,
+        { question: questions[currentQ], answer, ...fb },
+      ]);
+    } catch (err) {
+      console.error("Answer evaluation failed:", err);
+    } finally {
+      setEvaluating(false);
+      setPhase("feedback");
+    }
+  };
+
+  const nextQuestion = () => {
+    if (currentQ + 1 >= questions.length) {
+      finishInterview();
+      return;
+    }
+    setCurrentQ((q) => q + 1);
+    setAnswer("");
+    setCurrentFeedback(null);
+    setPhase("interview");
+  };
+
+  const finishInterview = () => {
+    stopWebcam();
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+
+    const overallScore = sessionAnswers.reduce((sum, a) => sum + a.score, 0) / (sessionAnswers.length || 1);
+
+    // Save attempt to localStorage array without overwriting
+    try {
+      const raw = localStorage.getItem("careerLensInterviewResults");
+      const results = raw ? JSON.parse(raw) : [];
+      results.push({
+        id: `int-${Date.now()}`,
+        targetRole,
+        difficulty,
+        overallScore: Number(overallScore.toFixed(2)),
+        questions: sessionAnswers,
+        completedAt: new Date().toISOString(),
+      });
+      localStorage.setItem("careerLensInterviewResults", JSON.stringify(results));
+    } catch (e) {
+      console.error("Failed to save interview result:", e);
+    }
+
+    setPhase("report");
+  };
+
+  /* Performance Label Helper */
+  const performanceLabel = (score) => {
+    if (score >= 8.5) return { label: "Excellent Performance", color: "#6ee7b7" };
+    if (score >= 6.5) return { label: "Good Technical Response", color: "#a598ff" };
+    if (score >= 4.5) return { label: "Average Response", color: "#fbbf24" };
+    return { label: "Needs Technical Depth", color: "#fca5a5" };
+  };
+
+  /* ── No resume uploaded ───────────────────────────────────── */
   if (!analysis) {
     return (
       <div className="page">
         <div className="pageHero">
           <p className="eyebrow">AI INTERVIEW LAB</p>
-          <h1>Practice a <span>Face-to-Face AI Interview.</span></h1>
+          <h1>Practice a <span>Video & Voice AI Interview.</span></h1>
           <p>Analyze your resume first to start a personalized AI interview.</p>
         </div>
         <div className="emptyState" style={{ flexDirection: "column", gap: "18px" }}>
           <p style={{ margin: 0 }}>Resume analysis required to generate personalized questions.</p>
-          <Link
-            to="/resume-analyzer"
-            className="analyzeButton"
-            style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "8px" }}
-          >
+          <Link to="/resume-analyzer" className="analyzeButton" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "8px" }}>
             <Sparkles size={16} /> Analyze Your Resume
           </Link>
         </div>
@@ -204,51 +371,47 @@ function AIInterview() {
   /* ══════════════════════════════════════════════════════════
      PHASE 1 — SETUP
   ═══════════════════════════════════════════════════════════ */
-  function startInterview() {
-    const qs = generateQuestions(targetRole, difficulty);
-    setQuestions(qs);
-    setCurrentQ(0);
-    setAnswer("");
-    setCurrentFeedback(null);
-    setSessionAnswers([]);
-    setPhase("interview");
-  }
-
   if (phase === "setup") {
     return (
       <div className="page">
         <div className="pageHero">
           <p className="eyebrow">AI INTERVIEW LAB</p>
-          <h1>AI Mock <span>Interview.</span></h1>
+          <h1>AI Video & Voice <span>Mock Interview.</span></h1>
           <p>
-            Practice real-time AI interviews with personalized questions,
-            instant scoring and detailed feedback.
+            Experience realistic technical interviews with webcam preview, voice responses, TTS questions,
+            and answer evaluation powered by Ollama Llama 3.2.
           </p>
         </div>
 
+        {/* Ollama Health Banner */}
+        {ollamaStatus.checked && !ollamaStatus.online && (
+          <div className="emptyState" style={{ marginBottom: "24px", border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.05)" }}>
+            <AlertCircle size={28} style={{ color: "#fca5a5" }} />
+            <div>
+              <h4 style={{ margin: "0 0 4px", color: "#fca5a5" }}>Local Ollama AI Service Unavailable</h4>
+              <p style={{ margin: 0, fontSize: "13px", color: "#cbd5e1" }}>
+                Please ensure Ollama is running on <code>http://localhost:11434</code> with model <code>llama3.2:3b</code>.
+              </p>
+            </div>
+            <button onClick={checkHealth} className="navLink" style={{ border: "1px solid #2a3547", cursor: "pointer", marginLeft: "auto" }}>
+              <RefreshCw size={14} /> Retry Connection
+            </button>
+          </div>
+        )}
+
         <div className="interviewPreview">
-          {/* Left: visual */}
           <div className="interviewVisual">
             <Brain size={55} />
-            <h2>AI Interview Ready</h2>
-            <p>
-              Target Role: <strong style={{ color: "#a598ff" }}>{targetRole}</strong>
-            </p>
+            <h2>AI Interview Studio</h2>
+            <p>Target Role: <strong style={{ color: "#a598ff" }}>{targetRole}</strong></p>
             <div className="skills" style={{ justifyContent: "center", marginTop: "14px" }}>
-              {candidateSkills.slice(0, 6).map((s) => (
-                <span key={s}>{s}</span>
-              ))}
-              {candidateSkills.length > 6 && (
-                <span>+{candidateSkills.length - 6} more</span>
-              )}
+              {candidateSkills.slice(0, 6).map((s) => <span key={s}>{s}</span>)}
             </div>
           </div>
 
-          {/* Right: setup */}
           <div className="interviewSetup">
-            <h2>Interview Setup</h2>
-
-            <p style={{ color: "#8491a6", fontSize: "14px" }}>Select difficulty:</p>
+            <h2>Select Setup</h2>
+            <p style={{ color: "#8491a6", fontSize: "14px" }}>Difficulty Level:</p>
 
             {["beginner", "intermediate", "advanced"].map((level) => (
               <div
@@ -257,41 +420,36 @@ function AIInterview() {
                 onClick={() => setDifficulty(level)}
                 style={{
                   cursor: "pointer",
-                  border: difficulty === level
-                    ? "1px solid #7063ff"
-                    : "1px solid #1f2a3a",
-                  background: difficulty === level
-                    ? "rgba(112,99,255,0.1)"
-                    : "#121a27",
-                  transition: "0.2s",
+                  border: difficulty === level ? "1px solid #7063ff" : "1px solid #1f2a3a",
+                  background: difficulty === level ? "rgba(112,99,255,0.1)" : "#121a27",
+                  transition: "0.2s"
                 }}
               >
-                {difficulty === level
-                  ? <CheckCircle size={17} style={{ color: "#7063ff" }} />
-                  : <div style={{ width: 17, height: 17, border: "2px solid #2a3547", borderRadius: "50%" }} />
-                }
-                <span style={{ textTransform: "capitalize", fontWeight: difficulty === level ? 700 : 400 }}>
-                  {level}
-                </span>
+                {difficulty === level ? <CheckCircle size={17} style={{ color: "#7063ff" }} /> : <div style={{ width: 17, height: 17, border: "2px solid #2a3547", borderRadius: "50%" }} />}
+                <span style={{ textTransform: "capitalize", fontWeight: difficulty === level ? 700 : 400 }}>{level}</span>
               </div>
             ))}
 
-            <div className="setupItem" style={{ marginTop: "8px" }}>
-              <Sparkles size={17} />
-              5 questions · Local AI evaluation
+            <div className="setupItem" style={{ marginTop: "12px", background: "rgba(109,93,252,0.06)" }}>
+              <Radio size={16} style={{ color: "#6ee7b7" }} />
+              Live Webcam + Microphone Required
             </div>
 
             <button
               className="analyzeButton"
               onClick={startInterview}
+              disabled={startingInterview}
               style={{ width: "100%", marginTop: "18px" }}
             >
-              <Sparkles size={17} /> Start AI Interview
+              {startingInterview ? (
+                <>
+                  <div className="loader" style={{ width: 16, height: 16, borderWidth: 2 }} />
+                  Preparing Video & Questions...
+                </>
+              ) : (
+                <><Sparkles size={17} /> Start Video & Voice Interview</>
+              )}
             </button>
-
-            <p style={{ fontSize: "11px", color: "#4a5568", marginTop: "10px", textAlign: "center" }}>
-              ⚠️ Evaluation is local/mock — not a real LLM API.
-            </p>
           </div>
         </div>
       </div>
@@ -299,111 +457,130 @@ function AIInterview() {
   }
 
   /* ══════════════════════════════════════════════════════════
-     PHASE 2 — INTERVIEW + FEEDBACK (interleaved)
+     PHASE 2 — INTERVIEW STAGE (Webcam + Voice + TTS)
   ═══════════════════════════════════════════════════════════ */
-  function submitAnswer() {
-    if (!answer.trim()) {
-      setAnswerError("Please type your answer before submitting.");
-      return;
-    }
-    setAnswerError("");
-    setEvaluating(true);
-
-    // Simulate async evaluation
-    setTimeout(() => {
-      const fb = mockEvaluate(questions[currentQ], answer, difficulty);
-      setCurrentFeedback({ ...fb, question: questions[currentQ], answer });
-      setSessionAnswers((prev) => [
-        ...prev,
-        { question: questions[currentQ], answer, ...fb },
-      ]);
-      setEvaluating(false);
-      setPhase("feedback");
-    }, 900);
-  }
-
-  function nextQuestion() {
-    if (currentQ + 1 >= questions.length) {
-      finishInterview();
-      return;
-    }
-    setCurrentQ((q) => q + 1);
-    setAnswer("");
-    setCurrentFeedback(null);
-    setPhase("interview");
-  }
-
-  function finishInterview() {
-    const allAnswers = [...sessionAnswers];
-    if (currentFeedback) {
-      // already appended in submitAnswer
-    }
-    const overallScore =
-      allAnswers.reduce((sum, a) => sum + a.score, 0) / allAnswers.length;
-
-    // Save to localStorage
-    const raw = localStorage.getItem("careerLensInterviewResults");
-    const results = raw ? JSON.parse(raw) : [];
-    results.push({
-      targetRole,
-      difficulty,
-      overallScore: +overallScore.toFixed(2),
-      questions: allAnswers,
-      completedAt: new Date().toISOString(),
-    });
-    localStorage.setItem("careerLensInterviewResults", JSON.stringify(results));
-
-    setPhase("report");
-  }
-
-  const progress = ((currentQ) / questions.length) * 100;
+  const progress = ((currentQ + 1) / (questions.length || 5)) * 100;
 
   if (phase === "interview") {
     return (
       <div className="page">
-        <div className="pageHero">
-          <p className="eyebrow">AI INTERVIEW · {difficulty.toUpperCase()}</p>
-          <h1>Question <span>{currentQ + 1} of {questions.length}</span></h1>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+          <div>
+            <p className="eyebrow" style={{ margin: 0 }}>AI INTERVIEW STUDIO · {difficulty.toUpperCase()}</p>
+            <h1 style={{ margin: "4px 0 0", fontSize: "24px" }}>
+              Target Role: <span style={{ color: "#a598ff" }}>{targetRole}</span>
+            </h1>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <span style={{ fontSize: "13px", fontWeight: 700, color: "#6ee7b7", background: "rgba(52,211,153,0.1)", padding: "6px 14px", borderRadius: "20px", border: "1px solid rgba(52,211,153,0.2)" }}>
+              Question {currentQ + 1} of {questions.length}
+            </span>
+          </div>
         </div>
 
-        {/* Progress bar */}
-        <div className="progress" style={{ marginBottom: "30px" }}>
+        <div className="progress" style={{ marginBottom: "24px" }}>
           <div style={{ width: `${progress}%` }} />
         </div>
 
-        {/* Question card */}
-        <div className="resultCard" style={{ marginBottom: "20px" }}>
-          <p className="eyebrow" style={{ marginBottom: "10px" }}>QUESTION {currentQ + 1}</p>
-          <h3 style={{ margin: 0, fontSize: "18px", lineHeight: 1.5, color: "#e2e8f0" }}>
-            {questions[currentQ]}
-          </h3>
+        {/* Video & Interviewer Grid */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "20px" }}>
+          {/* Question & TTS Card */}
+          <div className="resultCard" style={{ display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+                <p className="eyebrow" style={{ margin: 0 }}>AI INTERVIEWER QUESTION</p>
+                <button
+                  onClick={() => setTtsMuted(!ttsMuted)}
+                  style={{ background: "transparent", border: "none", color: "#8491a6", cursor: "pointer" }}
+                  title={ttsMuted ? "Unmute Interviewer" : "Mute Interviewer"}
+                >
+                  {ttsMuted ? <VolumeX size={18} /> : <Volume2 size={18} style={{ color: isSpeaking ? "#6ee7b7" : "#8491a6" }} />}
+                </button>
+              </div>
+
+              <h3 style={{ margin: "0 0 16px 0", fontSize: "19px", lineHeight: 1.5, color: "#e2e8f0" }}>
+                "{questions[currentQ]}"
+              </h3>
+            </div>
+
+            <div style={{ display: "flex", gap: "10px", marginTop: "16px" }}>
+              <button
+                className="navLink"
+                onClick={() => speakQuestion(questions[currentQ])}
+                style={{ padding: "8px 14px", borderRadius: "8px", fontSize: "13px", cursor: "pointer", border: "1px solid #2a3547" }}
+              >
+                <Volume2 size={14} /> Replay Question
+              </button>
+            </div>
+          </div>
+
+          {/* Candidate Webcam Preview */}
+          <div className="resultCard" style={{ padding: "12px", background: "#060a12", position: "relative", minHeight: "220px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              style={{ width: "100%", height: "200px", objectFit: "cover", borderRadius: "8px", transform: "scaleX(-1)", background: "#0a1020" }}
+            />
+
+            {/* Media Overlay Status & Toggles */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "10px" }}>
+              <div style={{ display: "flex", gap: "10px" }}>
+                <button
+                  onClick={toggleCamera}
+                  style={{ padding: "6px 12px", borderRadius: "6px", border: "1px solid #2a3547", background: cameraOn ? "rgba(52,211,153,0.15)" : "rgba(239,68,68,0.15)", color: cameraOn ? "#6ee7b7" : "#fca5a5", fontSize: "12px", cursor: "pointer", display: "flex", alignItems: "center", gap: "5px" }}
+                >
+                  {cameraOn ? <Camera size={13} /> : <CameraOff size={13} />}
+                  Camera: {cameraOn ? "ON" : "OFF"}
+                </button>
+
+                <button
+                  onClick={toggleMic}
+                  style={{ padding: "6px 12px", borderRadius: "6px", border: "1px solid #2a3547", background: micOn ? "rgba(52,211,153,0.15)" : "rgba(239,68,68,0.15)", color: micOn ? "#6ee7b7" : "#fca5a5", fontSize: "12px", cursor: "pointer", display: "flex", alignItems: "center", gap: "5px" }}
+                >
+                  {micOn ? <Mic size={13} /> : <MicOff size={13} />}
+                  Mic: {micOn ? "ON" : "OFF"}
+                </button>
+              </div>
+
+              {mediaError && <span style={{ fontSize: "11px", color: "#fca5a5" }}>{mediaError}</span>}
+            </div>
+          </div>
         </div>
 
-        {/* Answer textarea */}
+        {/* Candidate Voice Transcript & Typed Input */}
         <div className="resultCard">
-          <label style={{ display: "block", color: "#8491a6", fontSize: "13px", marginBottom: "10px" }}>
-            Your Answer
-          </label>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+            <label style={{ color: "#8491a6", fontSize: "13px" }}>Your Answer (Voice or Typed)</label>
+            {sttSupported && (
+              <button
+                onClick={toggleListening}
+                style={{
+                  padding: "6px 14px", borderRadius: "20px", fontSize: "12px", fontWeight: 700,
+                  background: isListening ? "rgba(239,68,68,0.2)" : "rgba(109,93,252,0.15)",
+                  color: isListening ? "#fca5a5" : "#a598ff",
+                  border: isListening ? "1px solid rgba(239,68,68,0.4)" : "1px solid rgba(109,93,252,0.3)",
+                  cursor: "pointer", display: "flex", alignItems: "center", gap: "6px"
+                }}
+              >
+                <Mic size={14} className={isListening ? "spin" : ""} />
+                {isListening ? "Recording Voice (Click to Stop)..." : "Start Voice Answer"}
+              </button>
+            )}
+          </div>
+
           <textarea
             value={answer}
             onChange={(e) => { setAnswer(e.target.value); setAnswerError(""); }}
-            placeholder="Type your answer here..."
-            rows={8}
+            placeholder="Speak into microphone or type your answer here..."
+            rows={6}
             style={{
-              width: "100%",
-              background: "#0a1020",
-              border: "1px solid #273247",
-              borderRadius: "10px",
-              color: "#e2e8f0",
-              padding: "14px",
-              fontSize: "14px",
-              lineHeight: 1.7,
-              resize: "vertical",
-              outline: "none",
-              fontFamily: "inherit",
-              boxSizing: "border-box",
+              width: "100%", background: "#0a1020", border: "1px solid #273247", borderRadius: "10px",
+              color: "#e2e8f0", padding: "14px", fontSize: "14px", lineHeight: 1.7, outline: "none", boxSizing: "border-box"
             }}
           />
+
           {answerError && (
             <p style={{ color: "#fca5a5", fontSize: "13px", marginTop: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
               <AlertCircle size={14} /> {answerError}
@@ -414,15 +591,15 @@ function AIInterview() {
             className="analyzeButton"
             onClick={submitAnswer}
             disabled={evaluating}
-            style={{ marginTop: "14px" }}
+            style={{ marginTop: "14px", width: "100%" }}
           >
             {evaluating ? (
               <>
                 <div className="loader" style={{ width: 16, height: 16, borderWidth: 2 }} />
-                Evaluating...
+                FastAPI → Ollama Evaluating Actual Answer...
               </>
             ) : (
-              <><ChevronRight size={17} /> Submit Answer</>
+              <><ChevronRight size={17} /> Submit Answer for AI Evaluation</>
             )}
           </button>
         </div>
@@ -441,122 +618,117 @@ function AIInterview() {
       <div className="page">
         <div className="pageHero">
           <p className="eyebrow">FEEDBACK · QUESTION {currentQ + 1}</p>
-          <h1>Answer <span>Score: {currentFeedback.score}/10</span></h1>
+          <h1>Answer Score: <span>{currentFeedback.score} / 10</span></h1>
         </div>
 
-        {/* Score badge */}
-        <div className="metricCard highlight" style={{ marginBottom: "18px", textAlign: "center" }}>
-          <span>PERFORMANCE</span>
-          <h2 style={{ color: perf.color, margin: "10px 0 4px" }}>{perf.label}</h2>
-          <strong>{currentFeedback.score} / 10</strong>
+        <div className="metrics" style={{ marginBottom: "20px" }}>
+          <div className="metricCard highlight" style={{ textAlign: "center" }}>
+            <span>OVERALL SCORE</span>
+            <h2 style={{ color: perf.color }}>{currentFeedback.score} / 10</h2>
+            <strong>{perf.label}</strong>
+          </div>
+          <div className="metricCard">
+            <span>TECHNICAL ACCURACY</span>
+            <h2>{currentFeedback.technical_accuracy} / 10</h2>
+            <strong>Concept correctness</strong>
+          </div>
+          <div className="metricCard">
+            <span>RELEVANCE</span>
+            <h2>{currentFeedback.relevance} / 10</h2>
+            <strong>Question alignment</strong>
+          </div>
         </div>
 
-        {/* Your answer */}
         <div className="resultCard" style={{ marginBottom: "14px" }}>
-          <p className="eyebrow" style={{ marginBottom: "8px" }}>YOUR ANSWER</p>
-          <p style={{ color: "#8491a6", lineHeight: 1.7, margin: 0 }}>
-            {currentFeedback.answer}
-          </p>
+          <p className="eyebrow" style={{ marginBottom: "8px" }}>YOUR SUBMITTED ANSWER</p>
+          <p style={{ color: "#cbd5e1", lineHeight: 1.7, margin: 0 }}>"{currentFeedback.answer}"</p>
         </div>
 
-        {/* Strengths */}
-        <div className="resultCard" style={{ marginBottom: "14px" }}>
-          <h3 style={{ color: "#6ee7b7", marginTop: 0, display: "flex", alignItems: "center", gap: "8px" }}>
-            <CheckCircle size={17} /> Strengths
-          </h3>
-          <ul style={{ paddingLeft: "18px", color: "#a0aec0", lineHeight: 2 }}>
-            {currentFeedback.strengths.map((s, i) => <li key={i}>{s}</li>)}
-          </ul>
+        <div className="resultGrid" style={{ marginBottom: "14px" }}>
+          <div className="resultCard">
+            <h3 style={{ color: "#6ee7b7", margin: "0 0 10px 0", display: "flex", alignItems: "center", gap: "8px" }}>
+              <CheckCircle size={17} /> Strengths Identified
+            </h3>
+            <ul style={{ paddingLeft: "18px", color: "#a0aec0", lineHeight: 1.8, margin: 0 }}>
+              {currentFeedback.strengths.map((s, i) => <li key={i}>{s}</li>)}
+            </ul>
+          </div>
+
+          <div className="resultCard">
+            <h3 style={{ color: "#fbbf24", margin: "0 0 10px 0", display: "flex", alignItems: "center", gap: "8px" }}>
+              <AlertCircle size={17} /> Key Improvements
+            </h3>
+            <ul style={{ paddingLeft: "18px", color: "#a0aec0", lineHeight: 1.8, margin: 0 }}>
+              {currentFeedback.improvements.map((s, i) => <li key={i}>{s}</li>)}
+            </ul>
+          </div>
         </div>
 
-        {/* Improvements */}
-        <div className="resultCard" style={{ marginBottom: "14px" }}>
-          <h3 style={{ color: "#fbbf24", marginTop: 0, display: "flex", alignItems: "center", gap: "8px" }}>
-            <AlertCircle size={17} /> Improvements
-          </h3>
-          <ul style={{ paddingLeft: "18px", color: "#a0aec0", lineHeight: 2 }}>
-            {currentFeedback.improvements.map((s, i) => <li key={i}>{s}</li>)}
-          </ul>
-        </div>
-
-        {/* Suggested answer */}
         <div className="resultCard" style={{ marginBottom: "24px" }}>
-          <h3 style={{ color: "#a598ff", marginTop: 0 }}>💡 Suggested Answer</h3>
-          <p style={{ color: "#8491a6", lineHeight: 1.7, margin: 0 }}>
-            {currentFeedback.suggestedAnswer}
-          </p>
-          <p style={{ fontSize: "11px", color: "#4a5568", marginTop: "10px", marginBottom: 0 }}>
-            ⚠️ Mock evaluation — not real AI scoring.
-          </p>
+          <h3 style={{ color: "#a598ff", margin: "0 0 8px 0" }}>💡 Ideal Suggested Answer</h3>
+          <p style={{ color: "#cbd5e1", lineHeight: 1.7, margin: 0 }}>{currentFeedback.suggestedAnswer}</p>
         </div>
 
-        <button
-          className="analyzeButton"
-          onClick={nextQuestion}
-          style={{ width: "100%" }}
-        >
-          {isLast ? "View Final Report" : `Next Question →`}
+        <button className="analyzeButton" onClick={nextQuestion} style={{ width: "100%" }}>
+          {isLast ? "View Final Interview Report →" : "Next Question →"}
         </button>
       </div>
     );
   }
 
   /* ══════════════════════════════════════════════════════════
-     PHASE 4 — FINAL REPORT
+     PHASE 4 — FINAL REPORT & HISTORY PERSISTENCE
   ═══════════════════════════════════════════════════════════ */
   if (phase === "report") {
-    const overallScore =
-      sessionAnswers.reduce((sum, a) => sum + a.score, 0) / sessionAnswers.length;
+    const overallScore = sessionAnswers.reduce((sum, a) => sum + a.score, 0) / (sessionAnswers.length || 1);
     const perf = performanceLabel(overallScore);
 
     return (
       <div className="page">
         <div className="pageHero">
           <p className="eyebrow">INTERVIEW COMPLETED</p>
-          <h1>Overall Score: <span>{overallScore.toFixed(1)} / 10</span></h1>
+          <h1>Overall Evaluation: <span>{overallScore.toFixed(1)} / 10</span></h1>
           <p>
-            Target Role: <strong style={{ color: "#a598ff" }}>{targetRole}</strong>
-            {" · "}
-            Difficulty: <strong style={{ textTransform: "capitalize" }}>{difficulty}</strong>
+            Target Role: <strong style={{ color: "#a598ff" }}>{targetRole}</strong> · Difficulty: <strong style={{ textTransform: "capitalize" }}>{difficulty}</strong>
           </p>
         </div>
 
-        {/* Score cards */}
         <div className="metrics" style={{ marginBottom: "24px" }}>
           <div className="metricCard highlight">
-            <span>OVERALL SCORE</span>
+            <span>FINAL RATING</span>
             <h2 style={{ color: perf.color }}>{overallScore.toFixed(1)}</h2>
             <strong>{perf.label}</strong>
           </div>
           <div className="metricCard">
-            <span>QUESTIONS</span>
+            <span>TOTAL QUESTIONS</span>
             <h2>{sessionAnswers.length}</h2>
-            <strong>Answered</strong>
+            <strong>Evaluated by Ollama</strong>
           </div>
           <div className="metricCard">
-            <span>BEST SCORE</span>
-            <h2>{Math.max(...sessionAnswers.map((a) => a.score))}</h2>
+            <span>HIGHEST SUB-SCORE</span>
+            <h2>{sessionAnswers.length > 0 ? Math.max(...sessionAnswers.map((a) => a.score)) : 0}</h2>
             <strong>/ 10</strong>
           </div>
         </div>
 
-        {/* Per question breakdown */}
-        <h3 style={{ color: "#a598ff", marginBottom: "14px" }}>Question Breakdown</h3>
+        <h3 style={{ color: "#a598ff", marginBottom: "14px" }}>Question Breakdown & Analysis</h3>
         {sessionAnswers.map((item, idx) => {
           const p = performanceLabel(item.score);
           return (
             <div key={idx} className="resultCard" style={{ marginBottom: "12px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
                 <p className="eyebrow" style={{ margin: 0 }}>Q{idx + 1}</p>
-                <span style={{ color: p.color, fontWeight: 700 }}>{item.score}/10 — {p.label}</span>
+                <span style={{ color: p.color, fontWeight: 700 }}>{item.score} / 10</span>
               </div>
               <p style={{ color: "#e2e8f0", margin: "0 0 6px", fontWeight: 600 }}>{item.question}</p>
-              <p style={{ color: "#718096", margin: 0, fontSize: "13px" }}>{item.answer.slice(0, 180)}{item.answer.length > 180 ? "..." : ""}</p>
+              <p style={{ color: "#8491a6", margin: "0 0 8px", fontSize: "13px" }}>"{item.answer}"</p>
+              <div style={{ background: "#0a1020", padding: "10px", borderRadius: "6px", fontSize: "12px", color: "#cbd5e1" }}>
+                <strong style={{ color: "#a598ff" }}>Suggested Answer: </strong>{item.suggestedAnswer}
+              </div>
             </div>
           );
         })}
 
-        {/* Action buttons */}
         <div style={{ display: "flex", gap: "12px", marginTop: "28px", flexWrap: "wrap" }}>
           <button
             className="analyzeButton"
@@ -565,27 +737,17 @@ function AIInterview() {
               setSessionAnswers([]);
               setCurrentQ(0);
               setAnswer("");
-              setCurrentFeedback(null);
             }}
           >
-            <RotateCcw size={16} /> Retry Interview
+            <RotateCcw size={16} /> Retake AI Interview
           </button>
-          <Link
-            to="/dashboard"
+          <button
             className="navLink"
-            style={{
-              padding: "14px 22px",
-              borderRadius: "11px",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "8px",
-              fontWeight: 700,
-              textDecoration: "none",
-              border: "1px solid #2a3547",
-            }}
+            style={{ padding: "14px 22px", borderRadius: "11px", display: "inline-flex", alignItems: "center", gap: "8px", border: "1px solid #2a3547", cursor: "pointer" }}
+            onClick={() => navigate("/dashboard")}
           >
             <LayoutDashboard size={16} /> Back to Dashboard
-          </Link>
+          </button>
         </div>
       </div>
     );

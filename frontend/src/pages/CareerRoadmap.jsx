@@ -1,243 +1,242 @@
 import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Map, Sparkles, CheckCircle2, ArrowRight, Video, Briefcase, RefreshCw, AlertCircle } from "lucide-react";
 
 function CareerRoadmap() {
-
   const [analysis, setAnalysis] = useState(null);
+  const [roadmap, setRoadmap] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
-
-    const savedAnalysis =
-      localStorage.getItem("careerLensAnalysis");
-
+    const savedAnalysis = localStorage.getItem("careerLensAnalysis");
     if (savedAnalysis) {
-
       try {
-
-        const parsed =
-          JSON.parse(savedAnalysis);
-
-        console.log(
-          "Roadmap Analysis:",
-          parsed
-        );
-
+        const parsed = JSON.parse(savedAnalysis);
         setAnalysis(parsed);
-
-      } catch (error) {
-
-        console.error(
-          "Failed to load analysis:",
-          error
-        );
-
+        fetchRoadmap(parsed);
+      } catch (err) {
+        console.error("Failed to parse analysis:", err);
       }
-
     }
-
   }, []);
 
-  if (!analysis) {
+  const fetchRoadmap = async (currentAnalysis) => {
+    if (!currentAnalysis) return;
+    setLoading(true);
+    setError("");
 
+    const career = currentAnalysis.best_career?.role || "Software Professional";
+    const skillsDetected = currentAnalysis.skills_detected || [];
+    const matchedSkills = currentAnalysis.skill_gap?.matched_skills || [];
+    const missingSkills = currentAnalysis.skill_gap?.missing_skills || [];
+    const coverage = currentAnalysis.skill_gap?.coverage || 0;
+
+    try {
+      const res = await fetch("http://localhost:8000/generate-roadmap", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          target_role: career,
+          skills_detected: skillsDetected,
+          matched_skills: matchedSkills,
+          missing_skills: missingSkills,
+          coverage: coverage,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to generate personalized roadmap.");
+      }
+
+      const data = await res.json();
+      setRoadmap(data);
+    } catch (err) {
+      console.warn("Roadmap API call failed:", err);
+      setError("Failed to fetch LLM-enhanced roadmap. Showing deterministic skill-gap path.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!analysis) {
     return (
       <div className="page">
-
         <div className="pageHero">
-
-          <p className="eyebrow">
-            PERSONALIZED LEARNING
-          </p>
-
-          <h1>
-            Your Career{" "}
-            <span>Roadmap.</span>
-          </h1>
-
-          <p>
-            Build the skills required to
-            reach your target career.
-          </p>
-
+          <p className="eyebrow">PERSONALIZED LEARNING</p>
+          <h1>Your Career <span>Roadmap.</span></h1>
+          <p>Build the skills required to reach your target career.</p>
         </div>
 
-        <div className="emptyState">
-
-          Analyze your resume first to
-          generate your personalized roadmap.
-
+        <div className="emptyState" style={{ flexDirection: "column", gap: "18px" }}>
+          <p style={{ margin: 0 }}>Analyze your resume first to generate your personalized roadmap.</p>
+          <Link to="/resume-analyzer" className="analyzeButton" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "8px" }}>
+            <Sparkles size={16} /> Go to Resume Analyzer
+          </Link>
         </div>
-
       </div>
     );
   }
 
-  /*
-    Support both possible API structures:
-    nested and direct.
-  */
-
-  const career =
-    analysis.best_career?.role ||
-    analysis.career_prediction?.best_career?.role ||
-    analysis.career_prediction?.best_career ||
-    "Recommended Career";
-
-  const confidence =
-    analysis.best_career?.confidence ??
-    analysis.career_prediction?.best_career?.confidence ??
-    analysis.career_prediction?.confidence ??
-    0;
-
-  const missingSkills =
-    analysis.skill_gap?.missing_skills ||
-    analysis.skill_gap?.missing ||
-    analysis.missing_skills ||
-    [];
-
-  const matchedSkills =
-    analysis.skill_gap?.matched_skills ||
-    analysis.skill_gap?.matched ||
-    analysis.matched_skills ||
-    [];
-
-  const coverage =
-    analysis.skill_gap?.coverage ??
-    analysis.skill_coverage ??
-    analysis.coverage ??
-    0;
+  const career = analysis.best_career?.role || "Software Professional";
+  const confidence = analysis.best_career?.confidence ?? 0;
+  const coverage = analysis.skill_gap?.coverage ?? 0;
+  const matchedSkills = analysis.skill_gap?.matched_skills || [];
+  const missingSkills = analysis.skill_gap?.missing_skills || [];
 
   return (
-
     <div className="page">
-
       <div className="pageHero">
-
-        <p className="eyebrow">
-          PERSONALIZED LEARNING
-        </p>
-
-        <h1>
-          Your Career{" "}
-          <span>Roadmap.</span>
-        </h1>
-
+        <p className="eyebrow">PERSONALIZED LEARNING ROADMAP</p>
+        <h1>Your Personalized <span>Career Roadmap.</span></h1>
         <p>
-          Personalized roadmap generated
-          from your resume analysis.
+          A structured multi-stage learning path tailored to your <strong style={{ color: "#a598ff" }}>{career}</strong> target profile.
         </p>
-
       </div>
 
-
-      {/* TARGET CAREER */}
-
-      <div className="resultCard">
-
-        <p className="eyebrow">
-          YOUR TARGET CAREER
-        </p>
-
-        <h2>
-          {career}
-        </h2>
-
-        <p>
-          AI Match Confidence:{" "}
-          <strong>
-            {Number(confidence).toFixed(1)}%
-          </strong>
-        </p>
-
-        <p>
-          Current skill coverage:{" "}
-          <strong>
-            {Number(coverage).toFixed(1)}%
-          </strong>
-        </p>
-
-      </div>
-
-
-      {/* CURRENT SKILLS */}
-
-      <div className="resultCard">
-
-        <h3>
-          Your Current Skills
-        </h3>
-
-        <div className="skills matched">
-
-          {matchedSkills.length > 0 ? (
-
-            matchedSkills.map(
-              (skill, index) => (
-
-                <span key={index}>
-                  ✓ {skill}
-                </span>
-
-              )
-            )
-
-          ) : (
-
-            <p>
-              No matched skills detected.
-            </p>
-
-          )}
-
+      {/* Target Career Header */}
+      <div className="metrics" style={{ marginBottom: "28px" }}>
+        <div className="metricCard highlight">
+          <span>TARGET CAREER</span>
+          <h2 style={{ fontSize: "22px" }}>{career}</h2>
+          <strong>{Number(confidence).toFixed(1)}% AI confidence match</strong>
         </div>
 
+        <div className="metricCard">
+          <span>SKILL COVERAGE</span>
+          <h2>{Number(coverage).toFixed(1)}%</h2>
+          <strong>Current readiness for {career}</strong>
+        </div>
+
+        <div className="metricCard">
+          <span>SKILLS TO MASTER</span>
+          <h2>{missingSkills.length}</h2>
+          <strong>Identified skill gaps</strong>
+        </div>
       </div>
 
+      {/* Action shortcuts */}
+      <div style={{ display: "flex", gap: "12px", marginBottom: "28px", flexWrap: "wrap" }}>
+        <button
+          className="analyzeButton"
+          style={{ padding: "10px 18px", fontSize: "14px" }}
+          onClick={() => navigate("/ai-interview")}
+        >
+          <Video size={16} /> Practice {career} Interview
+        </button>
+        <button
+          className="navLink active"
+          style={{ padding: "10px 18px", fontSize: "14px", cursor: "pointer" }}
+          onClick={() => navigate("/jobs")}
+        >
+          <Briefcase size={16} /> Search Matched Jobs
+        </button>
+        <button
+          className="navLink"
+          style={{ padding: "10px 18px", fontSize: "14px", cursor: "pointer", border: "1px solid #2a3547" }}
+          onClick={() => fetchRoadmap(analysis)}
+          disabled={loading}
+        >
+          <RefreshCw size={14} className={loading ? "spin" : ""} /> Regenerate Roadmap
+        </button>
+      </div>
 
-      {/* LEARNING ROADMAP */}
+      {/* Skills Comparison Row */}
+      <div className="resultGrid" style={{ marginBottom: "32px" }}>
+        <div className="resultCard">
+          <h3 style={{ color: "#6ee7b7", display: "flex", alignItems: "center", gap: "8px" }}>
+            <CheckCircle2 size={18} /> Matched Resume Skills ({matchedSkills.length})
+          </h3>
+          <div className="skills matched">
+            {matchedSkills.length > 0 ? (
+              matchedSkills.map((s) => <span key={s}>✓ {s}</span>)
+            ) : (
+              <p style={{ color: "#8491a6", fontSize: "13px" }}>No direct skill overlaps detected.</p>
+            )}
+          </div>
+        </div>
 
-      <div className="resultCard">
+        <div className="resultCard">
+          <h3 style={{ color: "#fbbf24", display: "flex", alignItems: "center", gap: "8px" }}>
+            <Sparkles size={18} /> Priority Skill Gaps ({missingSkills.length})
+          </h3>
+          <div className="skills missing">
+            {missingSkills.length > 0 ? (
+              missingSkills.map((s) => <span key={s}>△ {s}</span>)
+            ) : (
+              <p style={{ color: "#6ee7b7", fontSize: "13px" }}>Great work! No major missing skills for this role.</p>
+            )}
+          </div>
+        </div>
+      </div>
 
-        <p className="eyebrow">
-          PERSONALIZED ROADMAP
-        </p>
+      {/* Multi-Stage Roadmap */}
+      <div className="sectionTitle">
+        <p>ACTIONABLE LEARNING PATHWAY</p>
+        <h2>6-Stage Professional Roadmap</h2>
+      </div>
 
-        <h2>
-          Skills You Need to Learn
-        </h2>
+      {loading && (
+        <div className="loadingCard" style={{ marginBottom: "24px" }}>
+          <div className="loader"></div>
+          <div>
+            <h3>Generating Personalized Ollama Roadmap...</h3>
+            <p>Tailoring stages for {career} using local Llama 3.2 3B.</p>
+          </div>
+        </div>
+      )}
 
-        {missingSkills.length > 0 ? (
-
-          missingSkills.map(
-            (skill, index) => (
-
-              <div
-                className="setupItem"
-                key={index}
-              >
-
-                <strong>
-                  Step {index + 1}
-                </strong>
-
-                <span>
-                  Learn {skill}
+      {roadmap?.stages && (
+        <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+          {roadmap.stages.map((st, idx) => (
+            <div key={idx} className="resultCard" style={{ borderLeft: "4px solid #7063ff" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px", marginBottom: "10px" }}>
+                <h3 style={{ margin: 0, color: "#a598ff", fontSize: "18px" }}>{st.title}</h3>
+                <span style={{ fontSize: "12px", color: "#6ee7b7", background: "rgba(52,211,153,0.1)", padding: "4px 12px", borderRadius: "20px", border: "1px solid rgba(52,211,153,0.2)" }}>
+                  Duration: {st.duration}
                 </span>
-
               </div>
 
-            )
-          )
+              {/* Focus Skills */}
+              <div style={{ marginBottom: "12px" }}>
+                <strong style={{ fontSize: "12px", color: "#8491a6", textTransform: "uppercase" }}>Focus Skills:</strong>
+                <div className="skills" style={{ marginTop: "6px" }}>
+                  {(st.focus_skills || []).map((fs) => (
+                    <span key={fs} style={{ background: "rgba(112,99,255,0.1)", color: "#a598ff", borderColor: "rgba(112,99,255,0.2)" }}>
+                      {fs}
+                    </span>
+                  ))}
+                </div>
+              </div>
 
-        ) : (
+              {/* Action Items */}
+              <div style={{ marginBottom: "12px" }}>
+                <strong style={{ fontSize: "12px", color: "#8491a6", textTransform: "uppercase" }}>Action Steps:</strong>
+                <ul style={{ margin: "6px 0 0 0", paddingLeft: "20px", color: "#e2e8f0", fontSize: "14px", lineHeight: 1.7 }}>
+                  {(st.action_items || []).map((act, i) => (
+                    <li key={i}>{act}</li>
+                  ))}
+                </ul>
+              </div>
 
-          <p>
-            Great! No major skill gaps
-            were detected for this career.
-          </p>
+              {/* Milestone Project */}
+              {st.milestone_project && (
+                <div style={{ background: "#0a1020", padding: "10px 14px", borderRadius: "8px", border: "1px solid #1e2838", fontSize: "13px" }}>
+                  <strong style={{ color: "#fbbf24" }}>🏆 Milestone Project: </strong>
+                  <span style={{ color: "#cbd5e1" }}>{st.milestone_project}</span>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
 
-        )}
-
-      </div>
-
+      {roadmap && (
+        <p style={{ fontSize: "11px", color: roadmap.is_llm ? "#6ee7b7" : "#8491a6", marginTop: "16px", textAlign: "center" }}>
+          {roadmap.is_llm ? "⚡ Enhanced with Local Ollama AI (Llama 3.2 3B)" : "ℹ️ Structured Skill-Gap Roadmap"}
+        </p>
+      )}
     </div>
   );
 }

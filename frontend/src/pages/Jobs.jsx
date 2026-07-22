@@ -1,196 +1,15 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Briefcase, MapPin, ExternalLink, CheckCircle } from "lucide-react";
+import { Briefcase, MapPin, ExternalLink, CheckCircle, Search, AlertCircle, Bookmark, CheckSquare } from "lucide-react";
 
-/* ── Sample job data per career ────────────────────────────── */
-const SAMPLE_JOBS = {
-  "AI ML Engineer": [
-    {
-      id: 1,
-      title: "Machine Learning Engineer",
-      company: "Google DeepMind",
-      location: "Bangalore, India (Hybrid)",
-      type: "Full-time",
-      requiredSkills: ["Python", "TensorFlow", "PyTorch", "Machine Learning", "Deep Learning", "NLP"],
-    },
-    {
-      id: 2,
-      title: "AI Engineer",
-      company: "Microsoft Azure AI",
-      location: "Hyderabad, India (Remote)",
-      type: "Full-time",
-      requiredSkills: ["Python", "Machine Learning", "Azure ML", "REST APIs", "Docker"],
-    },
-    {
-      id: 3,
-      title: "MLOps Engineer",
-      company: "Flipkart",
-      location: "Bangalore, India",
-      type: "Full-time",
-      requiredSkills: ["Python", "Kubernetes", "MLflow", "Docker", "CI/CD", "Machine Learning"],
-    },
-    {
-      id: 4,
-      title: "Deep Learning Researcher",
-      company: "NVIDIA",
-      location: "Pune, India",
-      type: "Full-time",
-      requiredSkills: ["PyTorch", "CUDA", "Deep Learning", "Computer Vision", "Python", "Research"],
-    },
-    {
-      id: 5,
-      title: "Data Scientist – AI Products",
-      company: "Swiggy",
-      location: "Bangalore, India",
-      type: "Full-time",
-      requiredSkills: ["Python", "Machine Learning", "SQL", "Feature Engineering", "Statistics"],
-    },
-  ],
-  "Data Scientist": [
-    {
-      id: 1,
-      title: "Senior Data Scientist",
-      company: "Amazon",
-      location: "Hyderabad, India (Hybrid)",
-      type: "Full-time",
-      requiredSkills: ["Python", "Machine Learning", "SQL", "Statistics", "R", "Tableau"],
-    },
-    {
-      id: 2,
-      title: "Data Scientist – Analytics",
-      company: "Zomato",
-      location: "Gurgaon, India",
-      type: "Full-time",
-      requiredSkills: ["Python", "SQL", "Data Visualization", "Pandas", "Scikit-learn"],
-    },
-    {
-      id: 3,
-      title: "ML Data Scientist",
-      company: "Ola",
-      location: "Bangalore, India",
-      type: "Full-time",
-      requiredSkills: ["Python", "Machine Learning", "Spark", "Hadoop", "SQL"],
-    },
-  ],
-  "Software Engineer": [
-    {
-      id: 1,
-      title: "Software Development Engineer II",
-      company: "Amazon",
-      location: "Hyderabad, India",
-      type: "Full-time",
-      requiredSkills: ["Java", "Python", "REST APIs", "System Design", "SQL", "AWS"],
-    },
-    {
-      id: 2,
-      title: "Full Stack Engineer",
-      company: "Razorpay",
-      location: "Bangalore, India",
-      type: "Full-time",
-      requiredSkills: ["React", "Node.js", "JavaScript", "MongoDB", "REST APIs"],
-    },
-    {
-      id: 3,
-      title: "Backend Engineer",
-      company: "PhonePe",
-      location: "Bangalore, India",
-      type: "Full-time",
-      requiredSkills: ["Java", "Spring Boot", "Kafka", "SQL", "Microservices"],
-    },
-  ],
-  "Web Developer": [
-    {
-      id: 1,
-      title: "Frontend Engineer",
-      company: "Freshworks",
-      location: "Chennai, India",
-      type: "Full-time",
-      requiredSkills: ["React", "JavaScript", "CSS", "HTML", "TypeScript", "REST APIs"],
-    },
-    {
-      id: 2,
-      title: "Full Stack Developer",
-      company: "Zoho",
-      location: "Chennai, India",
-      type: "Full-time",
-      requiredSkills: ["React", "Node.js", "SQL", "JavaScript", "REST APIs"],
-    },
-  ],
-  "Cybersecurity Analyst": [
-    {
-      id: 1,
-      title: "Security Analyst",
-      company: "Infosys",
-      location: "Pune, India",
-      type: "Full-time",
-      requiredSkills: ["Network Security", "SIEM", "Python", "Linux", "Penetration Testing"],
-    },
-    {
-      id: 2,
-      title: "SOC Analyst",
-      company: "TCS",
-      location: "Bangalore, India",
-      type: "Full-time",
-      requiredSkills: ["SIEM", "Incident Response", "Firewall", "Linux", "Threat Analysis"],
-    },
-  ],
-};
-
-/* ── Compute match % ────────────────────────────────────────── */
-function computeMatch(candidateSkills, jobSkills) {
-  if (!jobSkills.length) return 0;
-  const cLower = candidateSkills.map((s) => s.toLowerCase());
-  const matched = jobSkills.filter((s) =>
-    cLower.includes(s.toLowerCase())
-  ).length;
-  return Math.round((matched / jobSkills.length) * 100);
-}
-
-/* ── Fallback: pick closest career from our keys ───────────── */
-function getBestJobSet(career) {
-  const keys = Object.keys(SAMPLE_JOBS);
-  const exact = keys.find(
-    (k) => k.toLowerCase() === career?.toLowerCase()
-  );
-  if (exact) return { key: exact, jobs: SAMPLE_JOBS[exact] };
-
-  // fuzzy: check if any keyword matches
-  const fuzzy = keys.find(
-    (k) =>
-      career?.toLowerCase().includes(k.toLowerCase().split(" ")[0]) ||
-      k.toLowerCase().includes(career?.toLowerCase().split(" ")[0])
-  );
-  if (fuzzy) return { key: fuzzy, jobs: SAMPLE_JOBS[fuzzy] };
-
-  // default to AI ML Engineer
-  return { key: "AI ML Engineer", jobs: SAMPLE_JOBS["AI ML Engineer"] };
-}
-
-/* ── Save job application to localStorage ───────────────────── */
-function saveApplication(job, matchPct) {
-  const raw = localStorage.getItem("careerLensApplications");
-  const apps = raw ? JSON.parse(raw) : [];
-  const alreadySaved = apps.some((a) => a.id === job.id && a.type === "Job");
-  if (alreadySaved) return false;
-  apps.push({
-    id: job.id,
-    type: "Job",
-    role: job.title,
-    company: job.company,
-    location: job.location,
-    matchPercentage: matchPct,
-    status: "Saved",
-    appliedAt: new Date().toISOString(),
-  });
-  localStorage.setItem("careerLensApplications", JSON.stringify(apps));
-  return true;
-}
-
-/* ── Component ──────────────────────────────────────────────── */
 function Jobs() {
   const [analysis, setAnalysis] = useState(null);
   const [jobs, setJobs] = useState([]);
-  const [career, setCareer] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [configured, setConfigured] = useState(true);
+  const [configMessage, setConfigMessage] = useState("");
+  const [roleSearch, setRoleSearch] = useState("");
+  const [locationSearch, setLocationSearch] = useState("India");
   const [applied, setApplied] = useState({});
 
   useEffect(() => {
@@ -199,45 +18,100 @@ function Jobs() {
 
     try {
       const parsed = JSON.parse(raw);
-      const detectedCareer = parsed.best_career?.role || "AI ML Engineer";
-      const skills = parsed.skills_detected || [];
-
       setAnalysis(parsed);
-      setCareer(detectedCareer);
-
-      const { jobs: baseJobs } = getBestJobSet(detectedCareer);
-
-      const scored = baseJobs.map((job) => ({
-        ...job,
-        matchPct: computeMatch(skills, job.requiredSkills),
-        matchedSkills: job.requiredSkills.filter((s) =>
-          skills.map((c) => c.toLowerCase()).includes(s.toLowerCase())
-        ),
-      }));
-
-      scored.sort((a, b) => b.matchPct - a.matchPct);
-      setJobs(scored);
+      const targetRole = parsed.best_career?.role || "AI ML Engineer";
+      setRoleSearch(targetRole);
+      fetchJobs(targetRole, "India", parsed);
     } catch (e) {
       console.error("Failed to load analysis:", e);
     }
   }, []);
 
-  /* ── No resume yet ─────────────────────────────────────────── */
+  const fetchJobs = async (role, loc, currentAnalysis) => {
+    setLoading(true);
+    try {
+      const res = await fetch(`http://localhost:8000/jobs?role=${encodeURIComponent(role)}&location=${encodeURIComponent(loc)}`);
+      const data = await res.json();
+
+      if (data.configured === false) {
+        setConfigured(false);
+        setConfigMessage(data.message || "Live job service is not configured. Please set JOBS_API_KEY in backend environment.");
+        setJobs([]);
+      } else {
+        setConfigured(true);
+        const userSkills = currentAnalysis?.skills_detected || [];
+        
+        // Compute resume skill match % for real jobs
+        const results = (data.results || []).map((j) => {
+          const descLower = (j.description || "").toLowerCase();
+          const matched = userSkills.filter((s) => descLower.includes(s.toLowerCase()));
+          const matchPct = userSkills.length > 0 ? Math.round((matched.length / userSkills.length) * 100) : 50;
+          return {
+            ...j,
+            matchedSkills: matched,
+            matchPercentage: Math.max(20, Math.min(98, matchPct))
+          };
+        });
+
+        setJobs(results);
+      }
+    } catch (err) {
+      console.error("Jobs API error:", err);
+      setConfigured(false);
+      setConfigMessage("Unable to connect to backend Jobs API service.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    fetchJobs(roleSearch, locationSearch, analysis);
+  };
+
+  const saveApplicationRecord = (job, status = "Saved") => {
+    const raw = localStorage.getItem("careerLensApplications");
+    const apps = raw ? JSON.parse(raw) : [];
+
+    const existingIndex = apps.findIndex((a) => a.id === job.id && a.type === "Job");
+    
+    if (existingIndex >= 0) {
+      apps[existingIndex].status = status;
+      if (status === "Applied") apps[existingIndex].userConfirmedAppliedAt = new Date().toISOString();
+      if (status === "Application Opened") apps[existingIndex].applicationOpenedAt = new Date().toISOString();
+    } else {
+      apps.push({
+        id: job.id,
+        type: "Job",
+        role: job.title,
+        company: job.company,
+        location: job.location,
+        source: job.source || "Web Provider",
+        sourceUrl: job.sourceUrl || "#",
+        matchPercentage: job.matchPercentage || 50,
+        status: status,
+        savedAt: new Date().toISOString(),
+        applicationOpenedAt: status === "Application Opened" ? new Date().toISOString() : null,
+        userConfirmedAppliedAt: status === "Applied" ? new Date().toISOString() : null
+      });
+    }
+
+    localStorage.setItem("careerLensApplications", JSON.stringify(apps));
+    setApplied((prev) => ({ ...prev, [job.id]: status }));
+  };
+
+  /* ── No resume analysis ─────────────────────────────────────── */
   if (!analysis) {
     return (
       <div className="page">
         <div className="pageHero">
           <p className="eyebrow">OPPORTUNITIES</p>
-          <h1>
-            Find your next <span>Job.</span>
-          </h1>
-          <p>Discover jobs matched to your skills and career goals.</p>
+          <h1>Find your next <span>Job.</span></h1>
+          <p>Discover real-time jobs matched to your skills and career goals.</p>
         </div>
 
         <div className="emptyState" style={{ flexDirection: "column", gap: "18px" }}>
-          <p style={{ margin: 0 }}>
-            Analyze your resume first to discover matching jobs.
-          </p>
+          <p style={{ margin: 0 }}>Analyze your resume first to discover matching real-time jobs.</p>
           <Link to="/resume-analyzer" className="analyzeButton" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "8px" }}>
             Go to Resume Analyzer
           </Link>
@@ -246,147 +120,157 @@ function Jobs() {
     );
   }
 
-  /* ── Jobs view ─────────────────────────────────────────────── */
+  const detectedCareer = analysis.best_career?.role || "AI ML Engineer";
+
   return (
     <div className="page">
       <div className="pageHero">
-        <p className="eyebrow">OPPORTUNITIES</p>
-        <h1>
-          Jobs Matched <span>For You.</span>
-        </h1>
+        <p className="eyebrow">REAL-TIME JOB DISCOVERY</p>
+        <h1>Jobs Matched <span>For You.</span></h1>
         <p>
-          Based on your <strong style={{ color: "#a598ff" }}>{career}</strong> career
-          profile and resume skills.
+          Search real-time job openings tailored for <strong style={{ color: "#a598ff" }}>{detectedCareer}</strong>.
         </p>
       </div>
 
-      <p style={{ fontSize: "12px", color: "#4a5568", marginBottom: "24px" }}>
-        ⚠️ Demo listings only — not real live job openings.
-      </p>
+      {/* Search Bar */}
+      <form onSubmit={handleSearch} style={{ display: "flex", gap: "12px", marginBottom: "28px", flexWrap: "wrap" }}>
+        <input
+          type="text"
+          value={roleSearch}
+          onChange={(e) => setRoleSearch(e.target.value)}
+          placeholder="Job title or role..."
+          style={{
+            flex: 2, minWidth: "200px", padding: "12px 16px", borderRadius: "10px",
+            background: "#0a1020", border: "1px solid #273247", color: "#e2e8f0", outline: "none"
+          }}
+        />
+        <input
+          type="text"
+          value={locationSearch}
+          onChange={(e) => setLocationSearch(e.target.value)}
+          placeholder="Location (e.g. India, Remote)..."
+          style={{
+            flex: 1, minWidth: "150px", padding: "12px 16px", borderRadius: "10px",
+            background: "#0a1020", border: "1px solid #273247", color: "#e2e8f0", outline: "none"
+          }}
+        />
+        <button type="submit" className="analyzeButton" style={{ padding: "12px 20px" }} disabled={loading}>
+          <Search size={16} /> Search Jobs
+        </button>
+      </form>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-        {jobs.map((job) => (
-          <div key={job.id} className="resultCard" style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-
-            {/* Header row */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "10px" }}>
-              <div>
-                <h3 style={{ margin: "0 0 4px", fontSize: "17px" }}>{job.title}</h3>
-                <p style={{ margin: 0, color: "#8491a6", fontSize: "14px" }}>{job.company}</p>
-              </div>
-
-              {/* Match badge */}
-              <div style={{
-                padding: "6px 14px",
-                borderRadius: "20px",
-                fontSize: "13px",
-                fontWeight: 700,
-                background: job.matchPct >= 60
-                  ? "rgba(52,211,153,0.1)"
-                  : job.matchPct >= 30
-                  ? "rgba(251,191,36,0.1)"
-                  : "rgba(109,93,252,0.1)",
-                color: job.matchPct >= 60
-                  ? "#6ee7b7"
-                  : job.matchPct >= 30
-                  ? "#fbbf24"
-                  : "#a598ff",
-                border: `1px solid ${job.matchPct >= 60 ? "rgba(52,211,153,0.25)" : job.matchPct >= 30 ? "rgba(251,191,36,0.25)" : "rgba(109,93,252,0.25)"}`,
-              }}>
-                {job.matchPct}% Resume Match
-              </div>
-            </div>
-
-            {/* Meta info */}
-            <div style={{ display: "flex", gap: "18px", flexWrap: "wrap" }}>
-              <span style={{ display: "flex", alignItems: "center", gap: "5px", color: "#8491a6", fontSize: "13px" }}>
-                <MapPin size={13} /> {job.location}
-              </span>
-              <span style={{ display: "flex", alignItems: "center", gap: "5px", color: "#8491a6", fontSize: "13px" }}>
-                <Briefcase size={13} /> {job.type}
-              </span>
-            </div>
-
-            {/* Match bar */}
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-                <span style={{ fontSize: "12px", color: "#64748b" }}>Skill Match</span>
-                <span style={{ fontSize: "12px", color: "#8491a6" }}>
-                  {job.matchedSkills.length} / {job.requiredSkills.length} skills
-                </span>
-              </div>
-              <div className="progress">
-                <div style={{ width: `${job.matchPct}%` }} />
-              </div>
-            </div>
-
-            {/* Required skills */}
-            <div className="skills">
-              {job.requiredSkills.map((skill) => {
-                const matched = job.matchedSkills
-                  .map((s) => s.toLowerCase())
-                  .includes(skill.toLowerCase());
-                return (
-                  <span
-                    key={skill}
-                    style={matched ? {
-                      color: "#6ee7b7",
-                      background: "rgba(52,211,153,0.07)",
-                      borderColor: "rgba(52,211,153,0.25)",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "4px",
-                    } : {}}
-                  >
-                    {matched && <CheckCircle size={11} />}
-                    {skill}
-                  </span>
-                );
-              })}
-            </div>
-
-            {/* Action buttons */}
-            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginTop: "4px" }}>
-              <button
-                className="navLink active"
-                style={{ padding: "10px 18px", borderRadius: "10px", display: "flex", alignItems: "center", gap: "7px", fontSize: "14px", cursor: "pointer" }}
-                onClick={() => alert(`Viewing ${job.title} at ${job.company} — Demo only`)}
-              >
-                <ExternalLink size={15} /> View Job
-              </button>
-
-              <button
-                className="navLink"
-                disabled={applied[job.id] === "saved" || applied[job.id] === "duplicate"}
-                style={{
-                  padding: "10px 18px",
-                  borderRadius: "10px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "7px",
-                  fontSize: "14px",
-                  cursor: applied[job.id] ? "default" : "pointer",
-                  border: "1px solid #2a3547",
-                  opacity: applied[job.id] ? 0.7 : 1,
-                }}
-                onClick={() => {
-                  const saved = saveApplication(job, job.matchPct);
-                  setApplied((prev) => ({
-                    ...prev,
-                    [job.id]: saved ? "saved" : "duplicate",
-                  }));
-                }}
-              >
-                {applied[job.id] === "saved"
-                  ? "✅ Saved to Applications"
-                  : applied[job.id] === "duplicate"
-                  ? "Already Applied"
-                  : "Save & Apply"}
-              </button>
-            </div>
+      {/* Unconfigured Truthful State */}
+      {!configured && (
+        <div className="emptyState" style={{ flexDirection: "column", gap: "14px", border: "1px dashed rgba(251,191,36,0.3)", background: "rgba(251,191,36,0.04)" }}>
+          <AlertCircle size={32} style={{ color: "#fbbf24" }} />
+          <h3 style={{ margin: 0, color: "#fbbf24" }}>Live Job Service Not Configured</h3>
+          <p style={{ margin: 0, textAlign: "center", color: "#a0aec0", maxWidth: "600px", lineHeight: 1.6 }}>
+            {configMessage}
+          </p>
+          <div style={{ background: "#0a1020", padding: "12px 18px", borderRadius: "8px", border: "1px solid #1f2a38", fontSize: "12px", color: "#8491a6" }}>
+            <code>Set JOBS_API_KEY=your_key in backend environment variables to enable real-time listings.</code>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
+
+      {/* Loading state */}
+      {loading && (
+        <div className="loadingCard">
+          <div className="loader"></div>
+          <div>
+            <h3>Fetching Real-Time Job Listings...</h3>
+            <p>Searching configured jobs provider for {roleSearch}.</p>
+          </div>
+        </div>
+      )}
+
+      {/* Results */}
+      {configured && !loading && jobs.length === 0 && (
+        <div className="emptyState">
+          No active job listings found for "{roleSearch}" in "{locationSearch}". Try broadening your search query.
+        </div>
+      )}
+
+      {configured && !loading && jobs.length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          {jobs.map((job) => {
+            const currentStatus = applied[job.id] || "None";
+
+            return (
+              <div key={job.id} className="resultCard" style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "10px" }}>
+                  <div>
+                    <h3 style={{ margin: "0 0 4px", fontSize: "17px", color: "#e2e8f0" }}>{job.title}</h3>
+                    <p style={{ margin: 0, color: "#8491a6", fontSize: "14px" }}>{job.company}</p>
+                  </div>
+                  <div style={{
+                    padding: "6px 14px", borderRadius: "20px", fontSize: "13px", fontWeight: 700,
+                    background: "rgba(109,93,252,0.1)", color: "#a598ff", border: "1px solid rgba(109,93,252,0.25)"
+                  }}>
+                    {job.matchPercentage}% CareerLens Skill Match
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", gap: "18px", flexWrap: "wrap" }}>
+                  <span style={{ display: "flex", alignItems: "center", gap: "5px", color: "#8491a6", fontSize: "13px" }}>
+                    <MapPin size={13} /> {job.location || "Remote / Unspecified"}
+                  </span>
+                  <span style={{ display: "flex", alignItems: "center", gap: "5px", color: "#8491a6", fontSize: "13px" }}>
+                    <Briefcase size={13} /> {job.type || "Full-time"}
+                  </span>
+                  {job.source && (
+                    <span style={{ fontSize: "12px", color: "#64748b" }}>Source: {job.source}</span>
+                  )}
+                </div>
+
+                {job.description && (
+                  <p style={{ margin: 0, color: "#94a3b8", fontSize: "13px", lineHeight: 1.6, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                    {job.description}
+                  </p>
+                )}
+
+                {/* Actions */}
+                <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginTop: "4px", alignItems: "center" }}>
+                  {job.sourceUrl && (
+                    <a
+                      href={job.sourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="navLink active"
+                      style={{ padding: "10px 18px", borderRadius: "10px", display: "inline-flex", alignItems: "center", gap: "7px", fontSize: "14px", textDecoration: "none" }}
+                      onClick={() => saveApplicationRecord(job, "Application Opened")}
+                    >
+                      <ExternalLink size={15} /> Apply on Source Site
+                    </a>
+                  )}
+
+                  <button
+                    className="navLink"
+                    style={{
+                      padding: "10px 18px", borderRadius: "10px", display: "flex", alignItems: "center", gap: "7px", fontSize: "14px",
+                      border: "1px solid #2a3547", cursor: "pointer", background: currentStatus === "Saved" ? "rgba(109,93,252,0.2)" : "transparent"
+                    }}
+                    onClick={() => saveApplicationRecord(job, "Saved")}
+                  >
+                    <Bookmark size={15} /> {currentStatus === "Saved" ? "Saved to Tracker" : "Save Job"}
+                  </button>
+
+                  <button
+                    className="navLink"
+                    style={{
+                      padding: "10px 18px", borderRadius: "10px", display: "flex", alignItems: "center", gap: "7px", fontSize: "14px",
+                      border: "1px solid rgba(52,211,153,0.3)", cursor: "pointer", color: "#6ee7b7", background: currentStatus === "Applied" ? "rgba(52,211,153,0.2)" : "transparent"
+                    }}
+                    onClick={() => saveApplicationRecord(job, "Applied")}
+                  >
+                    <CheckSquare size={15} /> {currentStatus === "Applied" ? "✓ Applied - Confirmed" : "Mark as Applied"}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
