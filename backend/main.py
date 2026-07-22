@@ -212,17 +212,21 @@ def evaluate_ai_interview(request: EvaluateAnswerRequest):
 def get_jobs_endpoint(
     role: str = Query("AI ML Engineer"),
     location: str = Query("India"),
-    page: int = Query(1)
+    page: int = Query(1),
+    skills: Optional[str] = Query(None)
 ):
     """Fetches real-time jobs from backend provider service abstraction."""
-    return fetch_real_jobs(query=role, location=location, is_internship=False, page=page)
+    skills_list = [s.strip() for s in skills.split(",")] if skills else []
+    return fetch_real_jobs(query=role, location=location, is_internship=False, page=page, candidate_skills=skills_list)
 
 
 @app.get("/internships")
 def get_internships_endpoint(
     role: str = Query("AI ML Engineer"),
     location: str = Query("India"),
-    page: int = Query(1)
+    page: int = Query(1),
+    skills: Optional[str] = Query(None)
 ):
     """Fetches real-time internships from backend provider service abstraction."""
-    return fetch_real_jobs(query=role, location=location, is_internship=True, page=page)
+    skills_list = [s.strip() for s in skills.split(",")] if skills else []
+    return fetch_real_jobs(query=role, location=location, is_internship=True, page=page, candidate_skills=skills_list)

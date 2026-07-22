@@ -33,10 +33,14 @@ function CareerRoadmap() {
     const missingSkills = currentAnalysis.skill_gap?.missing_skills || [];
     const coverage = currentAnalysis.skill_gap?.coverage || 0;
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout to prevent infinite loading
+
     try {
       const res = await fetch("http://localhost:8000/generate-roadmap", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
         body: JSON.stringify({
           target_role: career,
           skills_detected: skillsDetected,
@@ -46,15 +50,25 @@ function CareerRoadmap() {
         }),
       });
 
+      clearTimeout(timeoutId);
+
       if (!res.ok) {
-        throw new Error("Failed to generate personalized roadmap.");
+        throw new Error("Local AI service is unavailable. Please start Ollama and try again.");
       }
 
       const data = await res.json();
+      if (data.is_llm === false) {
+        setError("Local AI service is unavailable. Please start Ollama and try again.");
+      }
       setRoadmap(data);
     } catch (err) {
-      console.warn("Roadmap API call failed:", err);
-      setError("Failed to fetch LLM-enhanced roadmap. Showing deterministic skill-gap path.");
+      clearTimeout(timeoutId);
+      console.warn("Roadmap API call error:", err);
+      if (err.name === "AbortError") {
+        setError("Ollama request timed out after 60 seconds. Please check local server performance and try again.");
+      } else {
+        setError("Local AI service is unavailable. Please start Ollama and try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -94,6 +108,13 @@ function CareerRoadmap() {
           A structured multi-stage learning path tailored to your <strong style={{ color: "#a598ff" }}>{career}</strong> target profile.
         </p>
       </div>
+
+      {error && (
+        <div className="emptyState" style={{ marginBottom: "24px", border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.05)", color: "#fca5a5", flexDirection: "row", gap: "10px" }}>
+          <AlertCircle size={20} />
+          <span>{error}</span>
+        </div>
+      )}
 
       {/* Target Career Header */}
       <div className="metrics" style={{ marginBottom: "28px" }}>

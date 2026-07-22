@@ -30,7 +30,9 @@ function Internships() {
   const fetchInternships = async (role, loc, currentAnalysis) => {
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:8000/internships?role=${encodeURIComponent(role)}&location=${encodeURIComponent(loc)}`);
+      const userSkills = currentAnalysis?.skills_detected || [];
+      const skillsQuery = userSkills.length > 0 ? `&skills=${encodeURIComponent(userSkills.join(","))}` : "";
+      const res = await fetch(`http://localhost:8000/internships?role=${encodeURIComponent(role)}&location=${encodeURIComponent(loc)}${skillsQuery}`);
       const data = await res.json();
 
       if (data.configured === false) {
@@ -39,20 +41,7 @@ function Internships() {
         setInternships([]);
       } else {
         setConfigured(true);
-        const userSkills = currentAnalysis?.skills_detected || [];
-
-        const results = (data.results || []).map((j) => {
-          const descLower = (j.description || "").toLowerCase();
-          const matched = userSkills.filter((s) => descLower.includes(s.toLowerCase()));
-          const matchPct = userSkills.length > 0 ? Math.round((matched.length / userSkills.length) * 100) : 50;
-          return {
-            ...j,
-            matchedSkills: matched,
-            matchPercentage: Math.max(25, Math.min(98, matchPct))
-          };
-        });
-
-        setInternships(results);
+        setInternships(data.results || []);
       }
     } catch (err) {
       console.error("Internships API error:", err);

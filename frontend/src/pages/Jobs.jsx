@@ -30,7 +30,9 @@ function Jobs() {
   const fetchJobs = async (role, loc, currentAnalysis) => {
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:8000/jobs?role=${encodeURIComponent(role)}&location=${encodeURIComponent(loc)}`);
+      const userSkills = currentAnalysis?.skills_detected || [];
+      const skillsQuery = userSkills.length > 0 ? `&skills=${encodeURIComponent(userSkills.join(","))}` : "";
+      const res = await fetch(`http://localhost:8000/jobs?role=${encodeURIComponent(role)}&location=${encodeURIComponent(loc)}${skillsQuery}`);
       const data = await res.json();
 
       if (data.configured === false) {
@@ -39,21 +41,7 @@ function Jobs() {
         setJobs([]);
       } else {
         setConfigured(true);
-        const userSkills = currentAnalysis?.skills_detected || [];
-        
-        // Compute resume skill match % for real jobs
-        const results = (data.results || []).map((j) => {
-          const descLower = (j.description || "").toLowerCase();
-          const matched = userSkills.filter((s) => descLower.includes(s.toLowerCase()));
-          const matchPct = userSkills.length > 0 ? Math.round((matched.length / userSkills.length) * 100) : 50;
-          return {
-            ...j,
-            matchedSkills: matched,
-            matchPercentage: Math.max(20, Math.min(98, matchPct))
-          };
-        });
-
-        setJobs(results);
+        setJobs(data.results || []);
       }
     } catch (err) {
       console.error("Jobs API error:", err);
